@@ -2,10 +2,10 @@ import {BCAbstractRobot, SPECS} from 'battlecode';
 
 const directions = [[0,-1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
 
-step = -1;var
+var step = -1;
 
 class Castle {
-  run(step) {
+  turn() {
     this.log("Castle health: " + this.me.health);
 	if (step % 10 === 0) {
 		this.log("Building a pilgrim at " + (this.me.x+1) + ", " + (this.me.y+1));
@@ -24,7 +24,7 @@ class Castle {
 }
 
 class Church {
-  run(step) {
+  turn() {
     this.log("Church health: " + this.me.health);
 	if (step % 10 === 0) {
 		this.log("Building a pilgrim at " + (this.me.x+1) + ", " + (this.me.y+1));
@@ -43,7 +43,7 @@ class Church {
 }
 
 class Pilgrim {
-  run(step) {
+  turn() {
     this.log("Pilgrim health: " + this.me.health);
 	var direction = directions[Math.floor(Math.random()*directions.length)];
 	return this.move(...direction);
@@ -51,7 +51,7 @@ class Pilgrim {
 }
 
 class Crusader {
-  run(step) {
+  turn() {
     this.log("Crusader health: " + this.me.health);
 	var direction = directions[Math.floor(Math.random()*directions.length)];
 	return this.move(...direction);
@@ -59,7 +59,7 @@ class Crusader {
 }
 
 class Prophet {
-  run(step) {
+  turn() {
     this.log("Prophet health: " + this.me.health);
 	var direction = directions[Math.floor(Math.random()*directions.length)];
 	return this.move(...direction);
@@ -67,7 +67,7 @@ class Prophet {
 }
 
 class Preacher {
-  run(step) {
+  turn() {
     this.log("Preacher health: " + this.me.health);
 	var direction = directions[Math.floor(Math.random()*directions.length)];
 	return this.move(...direction);
@@ -76,26 +76,27 @@ class Preacher {
 
 class MyRobot extends BCAbstractRobot {
 	constructor() {
+		super();
 		this.robot = null;
 		
 		switch (this.me.unit) {
 			case SPECS.CASTLE:
-				robot = new Castle();
+				this.robot = new Castle();
 				break;
 			case SPECS.CHURCH:
-				robot = new Church();
+				this.robot = new Church();
 				break;
 			case SPECS.PILGRIM:
-				robot = new Pilgrim();
+				this.robot = new Pilgrim();
 				break;
 			case SPECS.CRUSADER:
-				robot = new Crusader();
+				this.robot = new Crusader();
 				break;
 			case SPECS.PROPHET:
-				robot = new Prophet();
+				this.robot = new Prophet();
 				break;
 			case SPECS.PREACHER:
-				robot = new Preacher();
+				this.robot = new Preacher();
 				break;
 			default:
 				this.log("Invalid unit type: " + this.me.unit);
@@ -105,7 +106,7 @@ class MyRobot extends BCAbstractRobot {
 	
     turn() {
         this.step++;
-		return robot.run();
+		return robot.turn();
     }
 }
 
