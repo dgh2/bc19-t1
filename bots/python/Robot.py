@@ -11,81 +11,82 @@ class MyRobot(BCAbstractRobot):
     step = -1
     direction = None
     directions = {
-        N: (0,-1),
-        NE: (1, -1),
-        E: (1, 0),
-        SE: (1, 1),
-        S: (0, 1),
-        SW: (-1, 1),
-        W: (-1, 0),
-        NW: (-1, -1)
+        'N': (0,-1),
+        'NE': (1, -1),
+        'E': (1, 0),
+        'SE': (1, 1),
+        'S': (0, 1),
+        'SW': (-1, 1),
+        'W': (-1, 0),
+        'NW': (-1, -1)
     }
     
-    def getRandomDirection():
+    def getRandomDirection(self):
         return random.choice(list(d.keys()))
     
     #you must return self.move(direction) or self.attack(direction) to do something
-    def castle():
+    def castle(self):
         #CASTLE code
-        print "CASTLE"
+        self.log("CASTLE")
         if self.step < 10:
             self.log("Building a crusader at " + str(self.me['x']+1) + ", " + str(self.me['y']+1))
             return self.build_unit(SPECS['CRUSADER'], 1, 1)
         else:
             self.log("Castle health: " + self.me['health'])
         
-    def church():
+    def church(self):
         #CHURCH code
-        print "CHURCH"
+        self.log("CHURCH")
         if self.step < 10:
             self.log("Building a crusader at " + str(self.me['x']+1) + ", " + str(self.me['y']+1))
             return self.build_unit(SPECS['CRUSADER'], 1, 1)
         else:
             self.log("Castle health: " + self.me['health'])
         
-    def pilgrim():
+    def pilgrim(self):
         #PILGRIM code
-        print "PILGRIM"
+        self.log("PILGRIM")
         if self.direction is None:
             self.direction = getRandomDirection()
             self.log('TRYING TO MOVE IN DIRECTION ' + str(choice))
         return self.move(*directions.get(self.direction, lambda: None))
         
-    def crusader():
+    def crusader(self):
         #CRUSADER code
-        print "CRUSADER"
+        self.log("CRUSADER")
         
-    def prophet():
+    def prophet(self):
         #PROPHET code
-        print "PROPHET"
+        self.log("PROPHET")
         
-    def preacher():
+    def preacher(self):
         #PREACHER code
-        print "PREACHER"
+        self.log("PREACHER")
         
-    def runUnitFunction(type):
+    def runUnitFunction(self, type):
         unitFunctions = {
-            SPECS['CASTLE']: castle,
-            SPECS['CHURCH']: church,
-            SPECS['PILGRIM']: pilgrim,
-            SPECS['CRUSADER']: crusader,
-            SPECS['PROPHET']: prophet,
-            SPECS['PREACHER']: preacher
+            SPECS['CASTLE']: self.castle,
+            SPECS['CHURCH']: self.church,
+            SPECS['PILGRIM']: self.pilgrim,
+            SPECS['CRUSADER']: self.crusader,
+            SPECS['PROPHET']: self.prophet,
+            SPECS['PREACHER']: self.preacher
         }
         unitFunction = unitFunctions.get(type, lambda: "Invalid unit type: " + type)
         return unitFunction()
     
-    def turnStart():
+    def turnStart(self):
         #code common to ALL unit types BEFORE unit specific code
         self.step += 1
         
-    def turnEnd():
+    def turnEnd(self):
         #code common to ALL unit types AFTER unit specific code
+        pass
         
     def turn(self):
-        turnStart()
-        returnValue = runUnitFunction(self.me['unit'])
-        turnEnd()
+        self.turnStart()
+        returnValue = self.runUnitFunction(self.me['unit'])
+        self.turnEnd()
         return returnValue
 
 robot = myRobot

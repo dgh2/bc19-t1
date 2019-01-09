@@ -75,38 +75,39 @@ class Preacher {
 }
 
 class MyRobot extends BCAbstractRobot {
-	constructor() {
-		super();
-		this.robot = null;
-		
-		switch (this.me.unit) {
-			case SPECS.CASTLE:
-				this.robot = new Castle();
-				break;
-			case SPECS.CHURCH:
-				this.robot = new Church();
-				break;
-			case SPECS.PILGRIM:
-				this.robot = new Pilgrim();
-				break;
-			case SPECS.CRUSADER:
-				this.robot = new Crusader();
-				break;
-			case SPECS.PROPHET:
-				this.robot = new Prophet();
-				break;
-			case SPECS.PREACHER:
-				this.robot = new Preacher();
-				break;
-			default:
-				this.log("Invalid unit type: " + this.me.unit);
-				throw new TypeError("Invalid unit type: " + this.me.unit);
-		}
-	}
-	
   turn() {
-    this.step++;
-    return robot.turn();
+    if (this.step == -1) {
+      //first turn initialization
+      this.robot = null;
+      switch (this.me.unit) {
+        case SPECS.CASTLE:
+          this.robot = new Castle();
+          break;
+        case SPECS.CHURCH:
+          this.robot = new Church();
+          break;
+        case SPECS.PILGRIM:
+          this.robot = new Pilgrim();
+          break;
+        case SPECS.CRUSADER:
+          this.robot = new Crusader();
+          break;
+        case SPECS.PROPHET:
+          this.robot = new Prophet();
+          break;
+        case SPECS.PREACHER:
+          this.robot = new Preacher();
+          break;
+        default:
+          r = this.me;
+          if (r != null) {
+            this.log("Invalid unit type: " + r.unit);
+            throw new TypeError("Invalid unit type: " + r.unit);
+          }
+      }
+      this.step++;
+      return robot.turn();
+    }
   }
 }
 
