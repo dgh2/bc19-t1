@@ -7,70 +7,70 @@ var step = -1;
 class Castle {
   turn() {
     this.log("Castle health: " + this.me.health);
-	if (step % 10 === 0) {
-		this.log("Building a pilgrim at " + (this.me.x+1) + ", " + (this.me.y+1));
-		return this.buildUnit(SPECS.PILGRIM, 1, 1);
-	} else if (step % 12 === 0) {
-		this.log("Building a crusader at " + (this.me.x+1) + ", " + (this.me.y+1));
-		return this.buildUnit(SPECS.CRUSADER, 1, 1);
-	} else if (step % 15 === 0) {
-		this.log("Building a prophet at " + (this.me.x+1) + ", " + (this.me.y+1));
-		return this.buildUnit(SPECS.PROPHET, 1, 1);
-	} else if (step % 19 === 0) {
-		this.log("Building a preacher at " + (this.me.x+1) + ", " + (this.me.y+1));
-		return this.buildUnit(SPECS.PREACHER, 1, 1);
-	}
+    if (step % 10 === 0) {
+      this.log("Building a pilgrim at " + (this.me.x+1) + ", " + (this.me.y+1));
+      return this.buildUnit(SPECS.PILGRIM, 1, 1);
+    } else if (step % 12 === 0) {
+      this.log("Building a crusader at " + (this.me.x+1) + ", " + (this.me.y+1));
+      return this.buildUnit(SPECS.CRUSADER, 1, 1);
+    } else if (step % 15 === 0) {
+      this.log("Building a prophet at " + (this.me.x+1) + ", " + (this.me.y+1));
+      return this.buildUnit(SPECS.PROPHET, 1, 1);
+    } else if (step % 19 === 0) {
+      this.log("Building a preacher at " + (this.me.x+1) + ", " + (this.me.y+1));
+      return this.buildUnit(SPECS.PREACHER, 1, 1);
+    }
   }
 }
 
 class Church {
   turn() {
     this.log("Church health: " + this.me.health);
-	if (step % 10 === 0) {
-		this.log("Building a pilgrim at " + (this.me.x+1) + ", " + (this.me.y+1));
-		return this.buildUnit(SPECS.PILGRIM, 1, 1);
-	} else if (step % 12 === 0) {
-		this.log("Building a crusader at " + (this.me.x+1) + ", " + (this.me.y+1));
-		return this.buildUnit(SPECS.CRUSADER, 1, 1);
-	} else if (step % 15 === 0) {
-		this.log("Building a prophet at " + (this.me.x+1) + ", " + (this.me.y+1));
-		return this.buildUnit(SPECS.PROPHET, 1, 1);
-	} else if (step % 19 === 0) {
-		this.log("Building a preacher at " + (this.me.x+1) + ", " + (this.me.y+1));
-		return this.buildUnit(SPECS.PREACHER, 1, 1);
-	}
+    if (step % 10 === 0) {
+      this.log("Building a pilgrim at " + (this.me.x+1) + ", " + (this.me.y+1));
+      return this.buildUnit(SPECS.PILGRIM, 1, 1);
+    } else if (step % 12 === 0) {
+      this.log("Building a crusader at " + (this.me.x+1) + ", " + (this.me.y+1));
+      return this.buildUnit(SPECS.CRUSADER, 1, 1);
+    } else if (step % 15 === 0) {
+      this.log("Building a prophet at " + (this.me.x+1) + ", " + (this.me.y+1));
+      return this.buildUnit(SPECS.PROPHET, 1, 1);
+    } else if (step % 19 === 0) {
+      this.log("Building a preacher at " + (this.me.x+1) + ", " + (this.me.y+1));
+      return this.buildUnit(SPECS.PREACHER, 1, 1);
+    }
   }
 }
 
 class Pilgrim {
   turn() {
     this.log("Pilgrim health: " + this.me.health);
-	var direction = directions[Math.floor(Math.random()*directions.length)];
-	return this.move(...direction);
+    var direction = directions[Math.floor(Math.random()*directions.length)];
+    return this.move(...direction);
   }
 }
 
 class Crusader {
   turn() {
     this.log("Crusader health: " + this.me.health);
-	var direction = directions[Math.floor(Math.random()*directions.length)];
-	return this.move(...direction);
+    var direction = directions[Math.floor(Math.random()*directions.length)];
+    return this.move(...direction);
   }
 }
 
 class Prophet {
   turn() {
     this.log("Prophet health: " + this.me.health);
-	var direction = directions[Math.floor(Math.random()*directions.length)];
-	return this.move(...direction);
+    var direction = directions[Math.floor(Math.random()*directions.length)];
+    return this.move(...direction);
   }
 }
 
 class Preacher {
   turn() {
     this.log("Preacher health: " + this.me.health);
-	var direction = directions[Math.floor(Math.random()*directions.length)];
-	return this.move(...direction);
+    var direction = directions[Math.floor(Math.random()*directions.length)];
+    return this.move(...direction);
   }
 }
 
@@ -104,10 +104,10 @@ class MyRobot extends BCAbstractRobot {
 		}
 	}
 	
-    turn() {
-        this.step++;
-		return robot.turn();
-    }
+  turn() {
+    this.step++;
+    return robot.turn();
+  }
 }
 
 var robot = new MyRobot();
