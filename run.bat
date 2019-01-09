@@ -24,5 +24,5 @@ EXIT
 )
 echo Second bot directory: %bot2%
 
-call bc19run -b %bot1% -r %bot2% --chi 1000
+call bc19run -b "%bot1%" -r "%bot2%" --chi 1000
 PAUSE
