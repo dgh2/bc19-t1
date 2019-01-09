@@ -23,6 +23,8 @@ PAUSE
 EXIT
 )
 echo Second bot directory: %bot2%
-
+echo Running bc19...
+@ECHO ON
 call bc19run -b "%bot1%" -r "%bot2%" --chi 1000
+@ECHO OFF
 PAUSE
