@@ -47,14 +47,28 @@ class MyRobot(BCAbstractRobot):
     def pilgrim(self):
         #PILGRIM code
         self.log("PILGRIM")
-        if self.step <= 100:
-            kmap = self.karbonite_map
-            self.log("Karbonite_map: " + kmap)
+        if self.step <= 1000:
+            kmap = self.get_karbonite_map()
+            #self.log("Karbonite_map help: " + kmap)
             ktype = type(kmap)
-            self.log("Karbonite_map type: " + ktype)
+            #self.log("Karbonite_map type: " + ktype) #list (iterable)
             kmaplength = len(kmap)
             self.log("Karbonite_map length: " + kmaplength)
-            self.log("Karbonite_map length type: " + type(kmaplength))
+            #self.log("Karbonite_map length type: " + type(kmaplength)) # int (any)
+            c = 0
+            r = 0
+            for column in kmap:
+              c += 1
+              #self.log(column)
+              for row in column:
+                r += 1
+                #self.log(row)
+            self.log("columns: " + c)
+            r = r / c
+            self.log("rows: " + r)
+            
+
+            
             choices = [(0,-1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
             choice = random.choice(choices)
             self.log('TRYING TO MOVE IN DIRECTION ' + str(choice))
