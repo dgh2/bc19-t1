@@ -30,9 +30,10 @@ class MyRobot(BCAbstractRobot):
         self.log("CASTLE")
         if self.step < 10:
             self.log("Building a crusader at " + str(self.me['x']+1) + ", " + str(self.me['y']+1))
-            return self.build_unit(SPECS['CRUSADER'], 1, 1)
+            return self.build_unit(SPECS['PILGRIM'], 1, 1)
         else:
             self.log("Castle health: " + self.me['health'])
+            return self.build_unit(SPECS['CRUSADER'], 1, 1)
         
     def church(self):
         #CHURCH code
@@ -46,10 +47,18 @@ class MyRobot(BCAbstractRobot):
     def pilgrim(self):
         #PILGRIM code
         self.log("PILGRIM")
-        if self.direction is None:
-            self.direction = getRandomDirection()
+        if self.step <= 100:
+            kmap = self.karbonite_map
+            self.log("Karbonite_map: " + kmap)
+            ktype = type(kmap)
+            self.log("Karbonite_map type: " + ktype)
+            kmaplength = len(kmap)
+            self.log("Karbonite_map length: " + kmaplength)
+            self.log("Karbonite_map length type: " + type(kmaplength))
+            choices = [(0,-1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
+            choice = random.choice(choices)
             self.log('TRYING TO MOVE IN DIRECTION ' + str(choice))
-        return self.move(*directions.get(self.direction, lambda: None))
+        return self.move(*choice)
         
     def crusader(self):
         #CRUSADER code
