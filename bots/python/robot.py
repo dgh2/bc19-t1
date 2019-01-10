@@ -23,11 +23,28 @@ class MyRobot(BCAbstractRobot):
     
     def getRandomDirection(self):
         return random.choice(list(d.keys()))
+        
+    def getMapSize(self):
+        map = self.get_passable_map()
+        c = 0
+        r = 0
+        for column in map:
+          c += 1
+          #self.log(column)
+          for row in column:
+            r += 1
+            #self.log(row)
+        r = r / c
+        mapsize = (c, r)
+        return mapsize
     
     #you must return self.move(direction) or self.attack(direction) to do something
     def castle(self):
         #CASTLE code
-        self.log("CASTLE")
+        self.log("CASTLE")        
+        if self.step <= 1:
+            sizeofmap = self.getMapSize()
+            self.log("map size: " + sizeofmap)
         if self.step < 10:
             self.log("Building a crusader at " + str(self.me['x']+1) + ", " + str(self.me['y']+1))
             return self.build_unit(SPECS['PILGRIM'], 1, 1)
@@ -48,24 +65,7 @@ class MyRobot(BCAbstractRobot):
         #PILGRIM code
         self.log("PILGRIM")
         if self.step <= 1000:
-            kmap = self.get_karbonite_map()
-            #self.log("Karbonite_map help: " + kmap)
-            ktype = type(kmap)
-            #self.log("Karbonite_map type: " + ktype) #list (iterable)
-            kmaplength = len(kmap)
-            self.log("Karbonite_map length: " + kmaplength)
-            #self.log("Karbonite_map length type: " + type(kmaplength)) # int (any)
-            c = 0
-            r = 0
-            for column in kmap:
-              c += 1
-              #self.log(column)
-              for row in column:
-                r += 1
-                #self.log(row)
-            self.log("columns: " + c)
-            r = r / c
-            self.log("rows: " + r)
+            self.log("Pilgram says map is: " + mapsize)
             
 
             
