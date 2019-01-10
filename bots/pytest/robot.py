@@ -67,6 +67,8 @@ class MyRobot(BCAbstractRobot):
             return False
         if not self.map[y][x]:
             return False
+        if self.get_visible_robot_map()[y][x] != 0:
+            return False
         return True
         
     def random_walk(self, changeDirection = False):
@@ -208,7 +210,7 @@ class MyRobot(BCAbstractRobot):
             if on_karbonite or on_fuel:
                 self.direction = opposite
                 #self.log(self.me['unit'] + ': Moving ' + self.direction)
-            if self.fuel > self.specs['FUEL_PER_MOVE']:
+            if self.fuel > self.specs['FUEL_PER_MOVE'] and not on_karbonite:
                 return self.random_walk(self.step % 4)
         
     def crusader(self):
