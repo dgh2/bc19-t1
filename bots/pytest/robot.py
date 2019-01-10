@@ -45,60 +45,77 @@ class MyRobot(BCAbstractRobot):
         if required_fuel > self.fuel:
             return False
         if direction is not None:
-            offset = self.directions.get(direction, lambda: None)
-            if not self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+            offset = self.directions.get(direction, lambda: None) #lookup (dx,dy) for direction
+            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+            if not self.traversable(*target):
                 return False
         return True
+    
+    def check_resources(self, karbonite = 0, fuel = 0):
+        if self.karbonite < karbonite:
+            return False #not enough karbonite
+        if self.fuel < fuel:
+            return False #not enough fuel
+        return True
         
-    def walk(self, direction):
+    def walk(self, direction): #take one step in given direction
         if direction is None:
             direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + direction)
-        offset = self.directions.get(direction, lambda: None)
+        offset = self.directions.get(direction, lambda: None) #lookup (dx,dy) for direction
+        target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
         #self.log(self.me['unit'] + ': At (' + self.me['x'] + ',' + self.me['y'] + ')')
         #self.log(self.me['unit'] + ': Moving ' + direction + ' to (' + (self.me['x'] + offset[0]) + ',' + (self.me['y'] + offset[1]) + ')')
-        if self.fuel > self.specs['FUEL_PER_MOVE'] and self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+        required_fuel = self.specs['FUEL_PER_MOVE']
+        if self.fuel >= required_fuel and self.traversable(*target):
             return self.move(*offset)
     
-    def traversable(self, x, y):
+    def traversable(self, x, y, ignore_robots = False):
         if x < 0 or x >= len(self.map[y]):
-            return False
+            return False #out of x bounds
         if y < 0 or y >= len(self.map):
-            return False
+            return False #out of y bounds
         if not self.map[y][x]:
-            return False
-        if self.get_visible_robot_map()[y][x] != 0:
-            return False
+            return False #target is an obstacle
+        if not ignore_robots and self.get_visible_robot_map()[y][x] > 0:
+            return False #target is blocked by a robot and we care
         return True
         
     def random_walk(self, changeDirection = False):
         if self.direction is None:
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
-        offset = self.directions.get(self.direction, lambda: None)
+        offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+        target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+        #try a few times to get a random traversable direction
         if changeDirection:
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
-            offset = self.directions.get(self.direction, lambda: None)
-        if not self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+        if not self.traversable(*target):
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
-            offset = self.directions.get(self.direction, lambda: None)
-        if not self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+        if not self.traversable(*target):
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
-            offset = self.directions.get(self.direction, lambda: None)
-        if not self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+        if not self.traversable(*target):
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
-            offset = self.directions.get(self.direction, lambda: None)
-        if self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+        #walk in direction if traversable
+        if self.traversable(*target):
             return self.walk(self.direction)
         
     def build(self, type, direction):
         if self.can_build(type, direction):
             self.log(self.me['unit'] + ': Building a ' + type.lower() + ' to the ' + direction)
-            offset = self.directions.get(direction, lambda: None)
+            offset = self.directions.get(direction, lambda: None) #lookup (dx,dy) for direction
             return self.build_unit(SPECS[type.upper()], *offset)
     
     def deposit(self, direction):
@@ -109,14 +126,15 @@ class MyRobot(BCAbstractRobot):
                 self.log(self.me['unit'] + ': Depositing ' + self.me['karbonite'] + ' karbonite')
             else:
                 self.log(self.me['unit'] + ': Depositing ' + self.me['fuel'] + ' fuel')
-            return self.give(*self.directions.get(direction, lambda: None), self.me['karbonite'], self.me['fuel'])
+            offset = self.directions.get(direction, lambda: None) #lookup (dx,dy) for direction
+            return self.give(*offset, self.me['karbonite'], self.me['fuel'])
     
     def castle(self):
         #self.log('CASTLE')
         if self.direction is None:
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
-        offset = self.directions.get(self.direction, lambda: None)
+        offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
         if not self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
@@ -146,7 +164,7 @@ class MyRobot(BCAbstractRobot):
         if self.direction is None:
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
-        offset = self.directions.get(self.direction, lambda: None)
+        offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
         if not self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
@@ -167,7 +185,7 @@ class MyRobot(BCAbstractRobot):
                 #self.log(self.me['unit'] + ': Moving ' + self.direction)
                 return self.build('pilgrim', old_direction)
             elif self.step % 4 == 0 and self.karbonite >= 2*church_cost:
-                self.direction = self.get_random_direction()
+                self.direction = self.get_random_direction() #change direction after building to reduce clumping
                 #self.log(self.me['unit'] + ': Moving ' + self.direction)
                 return self.build('crusader', old_direction)
         
@@ -177,17 +195,22 @@ class MyRobot(BCAbstractRobot):
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
         opposite = self.get_opposite_direction(self.direction)
-        offset = self.directions.get(opposite, lambda: None)
+        offset = self.directions.get(opposite, lambda: None) #lookup (dx,dy) for opposite direction
+        target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+        home = None #try to find a castle or church behind this robot
         id = -1
-        if self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
-            id = self.get_visible_robot_map()[self.me['y'] + offset[1]][self.me['x'] + offset[0]]
-        home = None #the castle or church behind this unit
-        if id > 0:
-            home = self.get_robot(id)
-            if home['team'] != self.me['team'] or not (home['unit'] == SPECS['CASTLE'] or home['unit'] == SPECS['CHURCH']):
-                home = None
+        if self.traversable(*target, True):
+            id = self.get_visible_robot_map()[target[1]][target[0]]
+        if id > 0: #target has a robot
+            home = self.get_robot(id) #the robot behind this robot
+            #self.log(self.me['unit'] + ': Behind = (' + home['x'] + ', ' + home['y'] + ')')
+            if home['team'] != self.me['team']:
+                home = None #other team
                 #todo: speed up?
-            #else:
+            elif home['unit'] != SPECS['CASTLE'] and home['unit'] != SPECS['CHURCH']:
+                home = None #not castle or church
+                #todo: speed up?
+            #else: #home = castle or church for depositing resources
                 #self.log(self.me['unit'] + ': Home = (' + home['y'] + ', ' + home['x'] + ')')
         has_resources = self.me['karbonite'] > 0 or self.me['fuel'] > 0
         on_karbonite = self.karbonite_map[self.me['y']][self.me['x']]
