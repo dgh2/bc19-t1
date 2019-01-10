@@ -26,6 +26,7 @@ class MyRobot(BCAbstractRobot):
         
     def getMapSize(self):
         map = self.get_passable_map()
+        #could really just do len(map) and assume square map.
         c = 0
         r = 0
         for column in map:
@@ -46,11 +47,11 @@ class MyRobot(BCAbstractRobot):
             sizeofmap = self.getMapSize()
             self.log("map size: " + sizeofmap)
         if self.step < 10:
-            self.log("Building a crusader at " + str(self.me['x']+1) + ", " + str(self.me['y']+1))
+            self.log("Building a PILGRIM at " + str(self.me['x']+1) + ", " + str(self.me['y']+1))
             return self.build_unit(SPECS['PILGRIM'], 1, 1)
         else:
             self.log("Castle health: " + self.me['health'])
-            return self.build_unit(SPECS['CRUSADER'], 1, 1)
+            return self.build_unit(SPECS['PILGRIM'], 1, 1)
         
     def church(self):
         #CHURCH code
@@ -65,9 +66,24 @@ class MyRobot(BCAbstractRobot):
         #PILGRIM code
         self.log("PILGRIM")
         if self.step <= 1000:
-            self.log("Pilgram says map is: " + mapsize)
-            
-
+            vizmap = self.get_visible_robot_map()
+            invision = {}
+            x = 0
+            y = 0
+            for column in vizmap:
+                x += 1
+                y = 0
+                for row in column:
+                  y += 1
+                  if row != -1: #not out of vision range
+                      xy = "(" + str( y ) + "," + str( x ) + ")"
+                      #self.log( "xy: " + xy )
+                      invision[xy] = row
+            keys = invision.keys()
+            self.log("tiles in vision: " + keys)
+            for key in keys:
+              value = invision[key]
+              self.log("key: " + key + " " + value)
             
             choices = [(0,-1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
             choice = random.choice(choices)
