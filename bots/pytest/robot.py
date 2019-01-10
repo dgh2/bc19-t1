@@ -55,9 +55,9 @@ class MyRobot(BCAbstractRobot):
             direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + direction)
         offset = self.directions.get(direction, lambda: None)
-        self.log(self.me['unit'] + ': At (' + self.me['x'] + ',' + self.me['y'] + ')')
-        self.log(self.me['unit'] + ': Moving ' + direction + ' to (' + (self.me['x'] + offset[0]) + ',' + (self.me['y'] + offset[1]) + ')')
-        if self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+        #self.log(self.me['unit'] + ': At (' + self.me['x'] + ',' + self.me['y'] + ')')
+        #self.log(self.me['unit'] + ': Moving ' + direction + ' to (' + (self.me['x'] + offset[0]) + ',' + (self.me['y'] + offset[1]) + ')')
+        if self.fuel > self.specs['FUEL_PER_MOVE'] and self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
             return self.move(*offset)
     
     def traversable(self, x, y):
@@ -182,20 +182,23 @@ class MyRobot(BCAbstractRobot):
         home = None #the castle or church behind this unit
         if id > 0:
             home = self.get_robot(id)
-            if home['team'] == self.me['team'] and (home['unit'] == SPECS['CASTLE'] or home['unit'] == SPECS['CHURCH']):
-                #self.log('Home: (' + home['y'] + ', ' + home['x'] + ')')
-                pass
-            else:
+            if home['team'] != self.me['team'] or not (home['unit'] == SPECS['CASTLE'] or home['unit'] == SPECS['CHURCH']):
                 home = None
                 #todo: speed up?
+            #else:
+                #self.log(self.me['unit'] + ': Home = (' + home['y'] + ', ' + home['x'] + ')')
         has_resources = self.me['karbonite'] > 0 or self.me['fuel'] > 0
         on_karbonite = self.karbonite_map[self.me['y']][self.me['x']]
         on_fuel = self.fuel_map[self.me['y']][self.me['x']]
         church_cost = SPECS['UNITS'][SPECS['CHURCH']].CONSTRUCTION_KARBONITE
-        if on_karbonite and self.me['karbonite'] < self.specs['KARBONITE_CAPACITY']:
-            return self.mine() #Mine karbonite
-        if on_fuel and self.me['fuel'] < self.specs['FUEL_CAPACITY']:
-            return self.mine() #Mine fuel
+        if on_karbonite and self.me['karbonite'] < self.specs['KARBONITE_CAPACITY'] and self.fuel > SPECS['MINE_FUEL_COST']:
+            if self.me['karbonite'] == 0:
+                self.log(self.me['unit'] + ': Mining karbonite')
+            return self.mine()
+        if on_fuel and self.me['fuel'] < self.specs['FUEL_CAPACITY'] and self.fuel > SPECS['MINE_FUEL_COST']:
+            if self.me['fuel'] == 0:
+                self.log(self.me['unit'] + ': Mining fuel')
+            return self.mine()
         if has_resources and home is not None:
             return self.deposit(opposite)
         if self.can_build('church', opposite) and (on_karbonite or (on_fuel and self.karbonite >= 2*church_cost)):
@@ -205,25 +208,29 @@ class MyRobot(BCAbstractRobot):
             if on_karbonite or on_fuel:
                 self.direction = opposite
                 #self.log(self.me['unit'] + ': Moving ' + self.direction)
-            return self.random_walk(self.step % 4)
+            if self.fuel > self.specs['FUEL_PER_MOVE']:
+                return self.random_walk(self.step % 4)
         
     def crusader(self):
         #self.log('CRUSADER')
         #TODO: attack any enemy in range
         #TODO: walk toward any visible enemy
-        return self.random_walk(self.step % 4)
+        if self.fuel > self.specs['FUEL_PER_MOVE']:
+            return self.random_walk(self.step % 4)
         
     def prophet(self):
         #self.log('PROPHET')
         #TODO: attack any enemy in range
         #TODO: walk toward any visible enemy
-        return self.random_walk(self.step % 4)
+        if self.fuel > self.specs['FUEL_PER_MOVE']:
+            return self.random_walk(self.step % 4)
         
     def preacher(self):
         #self.log('PREACHER')
         #TODO: attack any enemy in range
         #TODO: walk toward any visible enemy
-        return self.random_walk(self.step % 4)
+        if self.fuel > self.specs['FUEL_PER_MOVE']:
+            return self.random_walk(self.step % 4)
         
     def runUnitFunction(self, type):
         unitFunctions = {
