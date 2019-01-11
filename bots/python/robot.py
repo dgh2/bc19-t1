@@ -38,7 +38,23 @@ class MyRobot(BCAbstractRobot):
         r = r / c
         mapsize = (c, r)
         return mapsize
-    
+
+    def getKaboniteLocations(self):
+        kmap = self.get_karbonite_map()
+        Karbonite= []
+        x = 0
+        y = 0
+        for column in kmap:
+            x += 1
+            y = 0
+            for row in column:
+                y += 1
+                if row == True: #is a Karbonite deposit
+                    #add to list of tuples?
+                    tuple = ( x , y )
+                    Kabonite.append( tuple )
+        return Karbonite
+
     #you must return self.move(direction) or self.attack(direction) to do something
     def castle(self):
         #CASTLE code
@@ -76,15 +92,22 @@ class MyRobot(BCAbstractRobot):
                 for row in column:
                   y += 1
                   if row != -1: #not out of vision range
-                      xy = "(" + str( y ) + "," + str( x ) + ")"
+                      xy = str( y ) + "," + str( x )
                       #self.log( "xy: " + xy )
-                      invision[xy] = row
+                      invision[xy] = row #store value of this xy position
             keys = invision.keys()
             self.log("tiles in vision: " + keys)
             for key in keys:
               value = invision[key]
-              self.log("key: " + key + " " + value)
+              self.log("key: " + key + " Value: " + value)
+            #want to compare these x and y keys to a list of karbonite/ fuel locations
+            #then go to it and start mining.
             
+
+
+
+
+
             choices = [(0,-1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
             choice = random.choice(choices)
             self.log('TRYING TO MOVE IN DIRECTION ' + str(choice))
