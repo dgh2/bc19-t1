@@ -64,7 +64,7 @@ class MyRobot(BCAbstractRobot):
         target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
         #self.log(self.me['unit'] + ': At (' + self.me['x'] + ',' + self.me['y'] + ')')
         #self.log(self.me['unit'] + ': Moving ' + direction + ' to (' + (self.me['x'] + offset[0]) + ',' + (self.me['y'] + offset[1]) + ')')
-        required_fuel = self.specs['FUEL_PER_MOVE']
+        required_fuel = self.specs['FUEL_PER_MOVE']**2 #movement cost per r^2
         if self.check_resources(0, required_fuel) and self.traversable(*target):
             return self.move(*offset)
     
@@ -167,7 +167,7 @@ class MyRobot(BCAbstractRobot):
             if self.step % 5 == 0 and self.check_resources(church_cost[0] + pilgrim_cost[0] + crusader_cost[0], church_cost[1] + pilgrim_cost[1] + crusader_cost[1]):
                 self.direction = self.get_random_direction()
                 return self.build('crusader', old_direction)
-            if self.step % 3 == 0 and self.check_resources(2*church_cost[0] + prophet_cost[0], 2*church_cost[1] + crusader_cost[1]):
+            if self.step % 3 == 0 and self.check_resources(2*church_cost[0] + prophet_cost[0], 2*church_cost[1] + prophet_cost[1]):
                 self.direction = self.get_random_direction()
                 return self.build('prophet', old_direction)
             if self.step % 1 == 0 and self.check_resources(2*church_cost[0] + preacher_cost[0], 2*church_cost[1] + preacher_cost[1]):
@@ -212,7 +212,7 @@ class MyRobot(BCAbstractRobot):
             if self.step % 5 == 0 and self.check_resources(church_cost[0] + pilgrim_cost[0] + crusader_cost[0], church_cost[1] + pilgrim_cost[1] + crusader_cost[1]):
                 self.direction = self.get_random_direction()
                 return self.build('crusader', old_direction)
-            if self.step % 3 == 0 and self.check_resources(2*church_cost[0] + prophet_cost[0], 2*church_cost[1] + crusader_cost[1]):
+            if self.step % 3 == 0 and self.check_resources(2*church_cost[0] + prophet_cost[0], 2*church_cost[1] + prophet_cost[1]):
                 self.direction = self.get_random_direction()
                 return self.build('prophet', old_direction)
             if self.step % 1 == 0 and self.check_resources(2*church_cost[0] + preacher_cost[0], 2*church_cost[1] + preacher_cost[1]):
@@ -256,11 +256,13 @@ class MyRobot(BCAbstractRobot):
             return self.mine()
         if has_resources and home is not None:
             return self.deposit(opposite)
-        if self.can_build('church', opposite) and (on_karbonite or (on_fuel and self.check_resources(2*church_cost[0], church_cost[1]))):
+        more_karbonite = self.check_resources(self.fuel, 0)
+        more_fuel = self.check_resources(0, self.karbonite)
+        if home is None and ((on_karbonite and more_fuel) or (on_fuel and more_karbonite)) and self.can_build('church', opposite):
             return self.build('church', opposite)
         #TODO: if direction is occupied, go around or through
         if home is None and not on_karbonite:
-            if self.check_resources(0, SPECS['FUEL_PER_MOVE'] + church_cost[1]):
+            if self.check_resources(0, self.specs['FUEL_PER_MOVE']**2 + church_cost[1]):
                 if on_fuel:
                     #self.log(self.me['unit'] + ': Moving ' + self.direction)
                     self.direction = opposite
@@ -270,21 +272,21 @@ class MyRobot(BCAbstractRobot):
         #self.log('CRUSADER')
         #TODO: attack any enemy in range
         #TODO: walk toward any visible enemy
-        if self.fuel > self.specs['FUEL_PER_MOVE']:
+        if self.fuel > self.specs['FUEL_PER_MOVE']**2:
             return self.random_walk(self.step % 4)
         
     def prophet(self):
         #self.log('PROPHET')
         #TODO: attack any enemy in range
         #TODO: walk toward any visible enemy
-        if self.fuel > self.specs['FUEL_PER_MOVE']:
+        if self.fuel > self.specs['FUEL_PER_MOVE']**2:
             return self.random_walk(self.step % 4)
         
     def preacher(self):
         #self.log('PREACHER')
         #TODO: attack any enemy in range
         #TODO: walk toward any visible enemy
-        if self.fuel > self.specs['FUEL_PER_MOVE']:
+        if self.fuel > self.specs['FUEL_PER_MOVE']**2:
             return self.random_walk(self.step % 4)
         
     def runUnitFunction(self, type):
