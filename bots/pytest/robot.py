@@ -40,9 +40,7 @@ class MyRobot(BCAbstractRobot):
     def can_build(self, type, direction = None):
         required_karbonite = SPECS['UNITS'][SPECS[type.upper()]].CONSTRUCTION_KARBONITE
         required_fuel = SPECS['UNITS'][SPECS[type.upper()]].CONSTRUCTION_FUEL
-        if required_karbonite > self.karbonite:
-            return False
-        if required_fuel > self.fuel:
+        if not self.check_resources(required_karbonite, required_fuel):
             return False
         if direction is not None:
             offset = self.directions.get(direction, lambda: None) #lookup (dx,dy) for direction
@@ -67,7 +65,7 @@ class MyRobot(BCAbstractRobot):
         #self.log(self.me['unit'] + ': At (' + self.me['x'] + ',' + self.me['y'] + ')')
         #self.log(self.me['unit'] + ': Moving ' + direction + ' to (' + (self.me['x'] + offset[0]) + ',' + (self.me['y'] + offset[1]) + ')')
         required_fuel = self.specs['FUEL_PER_MOVE']
-        if self.fuel >= required_fuel and self.traversable(*target):
+        if self.check_resources(0, required_fuel) and self.traversable(*target):
             return self.move(*offset)
     
     def traversable(self, x, y, ignore_robots = False):
@@ -120,12 +118,14 @@ class MyRobot(BCAbstractRobot):
     
     def deposit(self, direction):
         if self.me['karbonite'] > 0 or self.me['fuel'] > 0:
+            total_k = self.me['karbonite'] + self.karbonite
+            total_f = self.me['fuel'] + self.fuel
             if self.me['karbonite'] > 0 and self.me['fuel'] > 0:
-                self.log(self.me['unit'] + ': Depositing ' + self.me['karbonite'] + ' karbonite and ' + self.me['fuel'] + ' fuel')
+                self.log(self.me['unit'] + ': Depositing ' + self.me['karbonite'] + ' karbonite and ' + self.me['fuel'] + ' fuel (' + total_k + ',' + total_f + ')')
             elif self.me['karbonite'] > 0:
-                self.log(self.me['unit'] + ': Depositing ' + self.me['karbonite'] + ' karbonite')
+                self.log(self.me['unit'] + ': Depositing ' + self.me['karbonite'] + ' karbonite (' + total_k + ',' + total_f + ')')
             else:
-                self.log(self.me['unit'] + ': Depositing ' + self.me['fuel'] + ' fuel')
+                self.log(self.me['unit'] + ': Depositing ' + self.me['fuel'] + ' fuel (' + total_k + ',' + total_f + ')')
             offset = self.directions.get(direction, lambda: None) #lookup (dx,dy) for direction
             return self.give(*offset, self.me['karbonite'], self.me['fuel'])
     
@@ -135,29 +135,44 @@ class MyRobot(BCAbstractRobot):
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
         offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
-        if not self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+        target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+        if not self.traversable(*target):
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
-            offset = self.directions.get(self.direction, lambda: None)
-        if not self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+        if not self.traversable(*target):
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
-            offset = self.directions.get(self.direction, lambda: None)
-        if not self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+        if not self.traversable(*target):
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
-            offset = self.directions.get(self.direction, lambda: None)
-        if self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+        if self.traversable(*target):
+            church_cost = (SPECS['UNITS'][SPECS['CHURCH']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['CHURCH']].CONSTRUCTION_FUEL)
+            pilgrim_cost = (SPECS['UNITS'][SPECS['PILGRIM']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['PILGRIM']].CONSTRUCTION_FUEL)
+            crusader_cost = (SPECS['UNITS'][SPECS['CRUSADER']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['CRUSADER']].CONSTRUCTION_FUEL)
+            prophet_cost = (SPECS['UNITS'][SPECS['PROPHET']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['PROPHET']].CONSTRUCTION_FUEL)
+            preacher_cost = (SPECS['UNITS'][SPECS['PREACHER']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['PREACHER']].CONSTRUCTION_FUEL)
             old_direction = self.direction
-            church_cost = SPECS['UNITS'][SPECS['CHURCH']].CONSTRUCTION_KARBONITE
-            if self.step % 7 == 0 and self.karbonite > church_cost + SPECS['UNITS'][SPECS['PILGRIM']].CONSTRUCTION_KARBONITE:
+            if self.step < 10 and self.check_resources(church_cost[0] + pilgrim_cost[0], church_cost[1] + pilgrim_cost[1]):
                 self.direction = self.get_random_direction()
-                #self.log(self.me['unit'] + ': Moving ' + self.direction)
                 return self.build('pilgrim', old_direction)
-            elif self.step % 4 == 0 and self.karbonite >= 2*church_cost:
+            if self.step % 7 == 0 and self.check_resources(church_cost[0] + pilgrim_cost[0], church_cost[1] + pilgrim_cost[1]):
                 self.direction = self.get_random_direction()
-                #self.log(self.me['unit'] + ': Moving ' + self.direction)
+                return self.build('pilgrim', old_direction)
+            if self.step % 5 == 0 and self.check_resources(church_cost[0] + pilgrim_cost[0] + crusader_cost[0], church_cost[1] + pilgrim_cost[1] + crusader_cost[1]):
+                self.direction = self.get_random_direction()
                 return self.build('crusader', old_direction)
+            if self.step % 3 == 0 and self.check_resources(2*church_cost[0] + prophet_cost[0], 2*church_cost[1] + crusader_cost[1]):
+                self.direction = self.get_random_direction()
+                return self.build('prophet', old_direction)
+            if self.step % 1 == 0 and self.check_resources(2*church_cost[0] + preacher_cost[0], 2*church_cost[1] + preacher_cost[1]):
+                self.direction = self.get_random_direction()
+                return self.build('preacher', old_direction)
         
     def church(self):
         #self.log('CHURCH')
@@ -165,29 +180,44 @@ class MyRobot(BCAbstractRobot):
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
         offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
-        if not self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+        target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+        if not self.traversable(*target):
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
-            offset = self.directions.get(self.direction, lambda: None)
-        if not self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+        if not self.traversable(*target):
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
-            offset = self.directions.get(self.direction, lambda: None)
-        if not self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+        if not self.traversable(*target):
             self.direction = self.get_random_direction()
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
-            offset = self.directions.get(self.direction, lambda: None)
-        if self.traversable(self.me['x'] + offset[0], self.me['y'] + offset[1]):
+            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
+        if self.traversable(*target):
+            church_cost = (SPECS['UNITS'][SPECS['CHURCH']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['CHURCH']].CONSTRUCTION_FUEL)
+            pilgrim_cost = (SPECS['UNITS'][SPECS['PILGRIM']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['PILGRIM']].CONSTRUCTION_FUEL)
+            crusader_cost = (SPECS['UNITS'][SPECS['CRUSADER']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['CRUSADER']].CONSTRUCTION_FUEL)
+            prophet_cost = (SPECS['UNITS'][SPECS['PROPHET']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['PROPHET']].CONSTRUCTION_FUEL)
+            preacher_cost = (SPECS['UNITS'][SPECS['PREACHER']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['PREACHER']].CONSTRUCTION_FUEL)
             old_direction = self.direction
-            church_cost = SPECS['UNITS'][SPECS['CHURCH']].CONSTRUCTION_KARBONITE
-            if self.step % 7 == 0 and self.karbonite > church_cost + SPECS['UNITS'][SPECS['PILGRIM']].CONSTRUCTION_KARBONITE:
+            if self.step < 10 and self.check_resources(church_cost[0] + pilgrim_cost[0], church_cost[1] + pilgrim_cost[1]):
                 self.direction = self.get_random_direction()
-                #self.log(self.me['unit'] + ': Moving ' + self.direction)
                 return self.build('pilgrim', old_direction)
-            elif self.step % 4 == 0 and self.karbonite >= 2*church_cost:
-                self.direction = self.get_random_direction() #change direction after building to reduce clumping
-                #self.log(self.me['unit'] + ': Moving ' + self.direction)
+            if self.step % 7 == 0 and self.check_resources(church_cost[0] + pilgrim_cost[0], church_cost[1] + pilgrim_cost[1]):
+                self.direction = self.get_random_direction()
+                return self.build('pilgrim', old_direction)
+            if self.step % 5 == 0 and self.check_resources(church_cost[0] + pilgrim_cost[0] + crusader_cost[0], church_cost[1] + pilgrim_cost[1] + crusader_cost[1]):
+                self.direction = self.get_random_direction()
                 return self.build('crusader', old_direction)
+            if self.step % 3 == 0 and self.check_resources(2*church_cost[0] + prophet_cost[0], 2*church_cost[1] + crusader_cost[1]):
+                self.direction = self.get_random_direction()
+                return self.build('prophet', old_direction)
+            if self.step % 1 == 0 and self.check_resources(2*church_cost[0] + preacher_cost[0], 2*church_cost[1] + preacher_cost[1]):
+                self.direction = self.get_random_direction()
+                return self.build('preacher', old_direction)
         
     def pilgrim(self):
         #self.log('PILGRIM')
@@ -215,25 +245,25 @@ class MyRobot(BCAbstractRobot):
         has_resources = self.me['karbonite'] > 0 or self.me['fuel'] > 0
         on_karbonite = self.karbonite_map[self.me['y']][self.me['x']]
         on_fuel = self.fuel_map[self.me['y']][self.me['x']]
-        church_cost = SPECS['UNITS'][SPECS['CHURCH']].CONSTRUCTION_KARBONITE
-        if on_karbonite and self.me['karbonite'] < self.specs['KARBONITE_CAPACITY'] and self.fuel > SPECS['MINE_FUEL_COST']:
+        church_cost = (SPECS['UNITS'][SPECS['CHURCH']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['CHURCH']].CONSTRUCTION_FUEL)
+        if on_karbonite and self.me['karbonite'] < self.specs['KARBONITE_CAPACITY'] and self.check_resources(0, SPECS['MINE_FUEL_COST']):
             if self.me['karbonite'] == 0:
                 self.log(self.me['unit'] + ': Mining karbonite')
             return self.mine()
-        if on_fuel and self.me['fuel'] < self.specs['FUEL_CAPACITY'] and self.fuel > SPECS['MINE_FUEL_COST']:
+        if on_fuel and self.me['fuel'] < self.specs['FUEL_CAPACITY'] and self.check_resources(0, SPECS['MINE_FUEL_COST']):
             if self.me['fuel'] == 0:
                 self.log(self.me['unit'] + ': Mining fuel')
             return self.mine()
         if has_resources and home is not None:
             return self.deposit(opposite)
-        if self.can_build('church', opposite) and (on_karbonite or (on_fuel and self.karbonite >= 2*church_cost)):
+        if self.can_build('church', opposite) and (on_karbonite or (on_fuel and self.check_resources(2*church_cost[0], church_cost[1]))):
             return self.build('church', opposite)
         #TODO: if direction is occupied, go around or through
-        if home is None:
-            if on_karbonite or on_fuel:
-                self.direction = opposite
-                #self.log(self.me['unit'] + ': Moving ' + self.direction)
-            if self.fuel > self.specs['FUEL_PER_MOVE'] and not on_karbonite:
+        if home is None and not on_karbonite:
+            if self.check_resources(0, SPECS['FUEL_PER_MOVE'] + church_cost[1]):
+                if on_fuel:
+                    #self.log(self.me['unit'] + ': Moving ' + self.direction)
+                    self.direction = opposite
                 return self.random_walk(self.step % 4)
         
     def crusader(self):
