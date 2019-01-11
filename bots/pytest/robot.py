@@ -261,33 +261,32 @@ class MyRobot(BCAbstractRobot):
         if home is None and ((on_karbonite and more_fuel) or (on_fuel and more_karbonite)) and self.can_build('church', opposite):
             return self.build('church', opposite)
         #TODO: if direction is occupied, go around or through
-        if home is None and not on_karbonite:
-            if self.check_resources(0, self.specs['FUEL_PER_MOVE']**2 + church_cost[1]):
-                if on_fuel:
-                    #self.log(self.me['unit'] + ': Moving ' + self.direction)
-                    self.direction = opposite
-                return self.random_walk(self.step % 4)
+        if self.check_resources(0, self.specs['FUEL_PER_MOVE']**2 + church_cost[1]):
+            if on_karbonite or on_fuel:
+                #self.log(self.me['unit'] + ': Moving ' + self.direction)
+                self.direction = opposite
+            return self.random_walk()#self.step % 8
         
     def crusader(self):
         #self.log('CRUSADER')
         #TODO: attack any enemy in range
         #TODO: walk toward any visible enemy
         if self.fuel > self.specs['FUEL_PER_MOVE']**2:
-            return self.random_walk(self.step % 4)
+            return self.random_walk()#self.step % 8
         
     def prophet(self):
         #self.log('PROPHET')
         #TODO: attack any enemy in range
         #TODO: walk toward any visible enemy
         if self.fuel > self.specs['FUEL_PER_MOVE']**2:
-            return self.random_walk(self.step % 4)
+            return self.random_walk()#self.step % 8
         
     def preacher(self):
         #self.log('PREACHER')
         #TODO: attack any enemy in range
         #TODO: walk toward any visible enemy
         if self.fuel > self.specs['FUEL_PER_MOVE']**2:
-            return self.random_walk(self.step % 4)
+            return self.random_walk()#self.step % 8
         
     def runUnitFunction(self, type):
         unitFunctions = {
