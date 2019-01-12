@@ -1,10 +1,13 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
-
+import nav from './nav.js';
+import Castle from './castle.js';
 const directions = [[0,-1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
 
-var step = -1;
+let step = -1;
 var slave = null;
 
+
+/*
 class Castle {
   turn(self) {
     self.log("Castle health: " + self.me.health);
@@ -22,7 +25,7 @@ class Castle {
       return self.buildUnit(SPECS.PREACHER, 1, 1);
     }
   }
-}
+}*/
 
 class Church {
   turn(self) {
@@ -81,7 +84,7 @@ class MyRobot extends BCAbstractRobot {
       //first turn initialization
       switch (this.me.unit) {
         case SPECS.CASTLE:
-          slave = new Castle();
+          slave = new Castle(step);
           break;
         case SPECS.CHURCH:
           slave = new Church();
@@ -112,3 +115,5 @@ class MyRobot extends BCAbstractRobot {
 }
 
 var robot = new MyRobot();
+
+//export {step};
