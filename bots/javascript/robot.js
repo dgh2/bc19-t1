@@ -3,10 +3,12 @@ import {BCAbstractRobot, SPECS} from 'battlecode';
 const directions = [[0,-1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
 
 var step = -1;
+var slave = null;
 
 class Castle {
-  turn() {
-    this.log("Castle health: " + this.me.health);
+  turn(self) {
+    self.log("Castle health: " + self.me.health);
+    /*
     if (step % 10 === 0) {
       this.log("Building a pilgrim at " + (this.me.x+1) + ", " + (this.me.y+1));
       return this.buildUnit(SPECS.PILGRIM, 1, 1);
@@ -20,83 +22,83 @@ class Castle {
       this.log("Building a preacher at " + (this.me.x+1) + ", " + (this.me.y+1));
       return this.buildUnit(SPECS.PREACHER, 1, 1);
     }
+    */
   }
 }
 
 class Church {
-  turn() {
-    this.log("Church health: " + this.me.health);
+  turn(self) {
+    self.log("Church health: " + self.me.health);
     if (step % 10 === 0) {
-      this.log("Building a pilgrim at " + (this.me.x+1) + ", " + (this.me.y+1));
-      return this.buildUnit(SPECS.PILGRIM, 1, 1);
+      self.log("Building a pilgrim at " + (self.me.x+1) + ", " + (self.me.y+1));
+      return self.buildUnit(SPECS.PILGRIM, 1, 1);
     } else if (step % 12 === 0) {
-      this.log("Building a crusader at " + (this.me.x+1) + ", " + (this.me.y+1));
-      return this.buildUnit(SPECS.CRUSADER, 1, 1);
+      self.log("Building a crusader at " + (self.me.x+1) + ", " + (self.me.y+1));
+      return self.buildUnit(SPECS.CRUSADER, 1, 1);
     } else if (step % 15 === 0) {
-      this.log("Building a prophet at " + (this.me.x+1) + ", " + (this.me.y+1));
-      return this.buildUnit(SPECS.PROPHET, 1, 1);
+      self.log("Building a prophet at " + (self.me.x+1) + ", " + (self.me.y+1));
+      return self.buildUnit(SPECS.PROPHET, 1, 1);
     } else if (step % 19 === 0) {
-      this.log("Building a preacher at " + (this.me.x+1) + ", " + (this.me.y+1));
-      return this.buildUnit(SPECS.PREACHER, 1, 1);
+      self.log("Building a preacher at " + (self.me.x+1) + ", " + (self.me.y+1));
+      return self.buildUnit(SPECS.PREACHER, 1, 1);
     }
   }
 }
 
 class Pilgrim {
   turn() {
-    this.log("Pilgrim health: " + this.me.health);
+    self.log("Pilgrim health: " + self.me.health);
     var direction = directions[Math.floor(Math.random()*directions.length)];
-    return this.move(...direction);
+    return self.move(...direction);
   }
 }
 
 class Crusader {
   turn() {
-    this.log("Crusader health: " + this.me.health);
+    self.log("Crusader health: " + self.me.health);
     var direction = directions[Math.floor(Math.random()*directions.length)];
-    return this.move(...direction);
+    return self.move(...direction);
   }
 }
 
 class Prophet {
   turn() {
-    this.log("Prophet health: " + this.me.health);
+    self.log("Prophet health: " + self.me.health);
     var direction = directions[Math.floor(Math.random()*directions.length)];
-    return this.move(...direction);
+    return self.move(...direction);
   }
 }
 
 class Preacher {
   turn() {
-    this.log("Preacher health: " + this.me.health);
+    self.log("Preacher health: " + self.me.health);
     var direction = directions[Math.floor(Math.random()*directions.length)];
-    return this.move(...direction);
+    return self.move(...direction);
   }
 }
 
 class MyRobot extends BCAbstractRobot {
   turn() {
-    if (this.step == -1) {
+    if (step == -1) {
       //first turn initialization
-      this.robot = null;
       switch (this.me.unit) {
         case SPECS.CASTLE:
-          this.robot = new Castle();
+          slave = new Castle();
           break;
         case SPECS.CHURCH:
-          this.robot = new Church();
+          slave = new Church();
           break;
         case SPECS.PILGRIM:
-          this.robot = new Pilgrim();
+          slave = new Pilgrim();
           break;
         case SPECS.CRUSADER:
-          this.robot = new Crusader();
+          slave = new Crusader();
           break;
         case SPECS.PROPHET:
-          this.robot = new Prophet();
+          slave = new Prophet();
           break;
         case SPECS.PREACHER:
-          this.robot = new Preacher();
+          slave = new Preacher();
           break;
         default:
           r = this.me;
@@ -105,9 +107,9 @@ class MyRobot extends BCAbstractRobot {
             throw new TypeError("Invalid unit type: " + r.unit);
           }
       }
-      this.step++;
-      return robot.turn();
     }
+    step++;
+    return slave.turn(this);
   }
 }
 
