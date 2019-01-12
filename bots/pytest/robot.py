@@ -36,9 +36,9 @@ class MyRobot(BCAbstractRobot):
         distance = None
         visible_robots = (robot for robot in self.get_visible_robots() if self.is_visible(robot))
         for robot in visible_robots:
-            if team is not None and robot['team'] != team
+            if team is not None and robot['team'] != team:
                 continue #team does not match the requested team
-            if type is not None and robot['type'] != type
+            if type is not None and robot['type'] != type:
                 continue #type does not match the requested type
             robot_distance =(self.me['x']-robot['x'])**2 + (self.me['y']-robot['y'])**2 #r**2 distance calculation
             if closest is None or robot_distance < distance: #if robot is closer than current closest robot
