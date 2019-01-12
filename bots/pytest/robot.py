@@ -34,7 +34,6 @@ class MyRobot(BCAbstractRobot):
     def get_closest_robot(self, team = None, type = None):
         closest = None
         distance = None
-        
         visible_robots = (robot for robot in self.get_visible_robots() if self.is_visible(robot))
         for robot in visible_robots:
             if team is not None and robot['team'] != team
@@ -46,6 +45,34 @@ class MyRobot(BCAbstractRobot):
                 distance = robot_distance
                 closest = robot
         return closest
+    
+    def get_closest_karbonite(self):
+        closest = None
+        distance = None
+        for y in self.karbonite_map:
+            for x in self.karbonite_map[y]:
+                if not self.karbonite_map[y][x]:
+                    continue #no resource
+                if not self.traversable(x,y):
+                    continue #unit on resource
+                karbonite_distance = (self.me['x']-x)**2 + (self.me['y']-y)**2 #r**2 distance calculation
+                if closest is None or karbonite_distance < distance: #if resource is closer than current closest resource
+                    distance = karbonite_distance
+                    closest = (x,y)
+    
+    def get_closest_fuel(self):
+        closest = None
+        distance = None
+        for y in self.fuel_map:
+            for x in self.fuel_map[y]:
+                if not self.fuel_map[y][x]:
+                    continue #no resource
+                if not self.traversable(x,y):
+                    continue #unit on resource
+                fuel_distance = (self.me['x']-x)**2 + (self.me['y']-y)**2 #r**2 distance calculation
+                if closest is None or fuel_distance < distance: #if resource is closer than current closest resource
+                    distance = fuel_distance
+                    closest = (x,y)
     
     def get_opposite_direction(self, direction):
         return self.opposite_directions.get(direction, lambda: None)
