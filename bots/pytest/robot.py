@@ -61,20 +61,16 @@ class MyRobot(BCAbstractRobot):
         distance = None
         
         #[[kx for kx in self.karbonite_map[ky]] for ky in self.karbonite_map]
-        for ky in [ky for ky in self.karbonite_map]:
-            self.log('ky: ' + ky)
-            for kx in [kx for kx in self.karbonite_map[ky]]
-                self.log('kx: ' + kx)
+        for ky in range(len(self.karbonite_map)):
+            for kx in range(len(self.karbonite_map[ky])):
                 if not self.karbonite_map[ky][kx]:
                     continue #no resource
                 if not self.traversable(kx,ky):
                     continue #unit on resource
                 karbonite_distance = (x-kx)**2 + (y-ky)**2 #r**2 distance calculation
-                self.log('K distance: ' + karbonite_distance)
                 if closest is None or karbonite_distance < distance: #if resource is closer than current closest resource
                     distance = karbonite_distance
                     closest = (kx,ky)
-                    self.log('Closest karbonite: ' + closest)
         return closest
     
     def get_closest_fuel(self, x, y):
