@@ -31,48 +31,68 @@ class MyRobot(BCAbstractRobot):
         'NW': 'SE'
     }
     
-    def get_closest_robot(self, team = None, type = None):
+    def get_direction(self, x1, y1, x2, y2):
+        dx = x1-x2
+        dy = y1-y2
+        offset = (dx/abs(dx),dy/abs(dy))
+        if dx == 0 and dy == 0:
+            return None
+        return next(key for key,value in self.directions if value[0] == offset[0] and value[1] == offset[1])
+    
+    def get_closest_robot(self, x, y, team = None, type = None):
         closest = None
         distance = None
         visible_robots = (robot for robot in self.get_visible_robots() if self.is_visible(robot))
         for robot in visible_robots:
+            rx = robot['x']
+            ry = robot['y']
             if team is not None and robot['team'] != team:
                 continue #team does not match the requested team
             if type is not None and robot['type'] != type:
                 continue #type does not match the requested type
-            robot_distance =(self.me['x']-robot['x'])**2 + (self.me['y']-robot['y'])**2 #r**2 distance calculation
+            robot_distance =(x-rx)**2 + (y-ry)**2 #r**2 distance calculation
             if closest is None or robot_distance < distance: #if robot is closer than current closest robot
                 distance = robot_distance
                 closest = robot
         return closest
     
-    def get_closest_karbonite(self):
+    def get_closest_karbonite(self, x, y):
         closest = None
         distance = None
-        for y in self.karbonite_map:
-            for x in self.karbonite_map[y]:
-                if not self.karbonite_map[y][x]:
+        
+        #[[kx for kx in self.karbonite_map[ky]] for ky in self.karbonite_map]
+        for ky in [ky for ky in self.karbonite_map]:
+            self.log('ky: ' + ky)
+            for kx in [kx for kx in self.karbonite_map[ky]]
+                self.log('kx: ' + kx)
+                if not self.karbonite_map[ky][kx]:
                     continue #no resource
-                if not self.traversable(x,y):
+                if not self.traversable(kx,ky):
                     continue #unit on resource
-                karbonite_distance = (self.me['x']-x)**2 + (self.me['y']-y)**2 #r**2 distance calculation
+                karbonite_distance = (x-kx)**2 + (y-ky)**2 #r**2 distance calculation
+                self.log('K distance: ' + karbonite_distance)
                 if closest is None or karbonite_distance < distance: #if resource is closer than current closest resource
                     distance = karbonite_distance
-                    closest = (x,y)
+                    closest = (kx,ky)
+                    self.log('Closest karbonite: ' + closest)
+        return closest
     
-    def get_closest_fuel(self):
+    def get_closest_fuel(self, x, y):
         closest = None
         distance = None
-        for y in self.fuel_map:
-            for x in self.fuel_map[y]:
-                if not self.fuel_map[y][x]:
+        for fy in self.fuel_map:
+            for fx in self.fuel_map[fy]:
+                if not self.fuel_map[fy][fx]:
                     continue #no resource
-                if not self.traversable(x,y):
+                if not self.traversable(fx,fy):
                     continue #unit on resource
-                fuel_distance = (self.me['x']-x)**2 + (self.me['y']-y)**2 #r**2 distance calculation
+                fuel_distance = (x-fx)**2 + (y-fy)**2 #r**2 distance calculation
+                self.log('F distance: ' + karbonite_distance)
                 if closest is None or fuel_distance < distance: #if resource is closer than current closest resource
                     distance = fuel_distance
-                    closest = (x,y)
+                    closest = (fx,fy)
+                    self.log('Closest fuel: ' + closest)
+        return closest
     
     def get_opposite_direction(self, direction):
         return self.opposite_directions.get(direction, lambda: None)
@@ -264,8 +284,19 @@ class MyRobot(BCAbstractRobot):
         
     def pilgrim(self):
         #self.log('PILGRIM')
+        closest_karbonite = self.get_closest_karbonite(self.me['x'], self.me['y'])
+        closest_fuel = self.get_closest_fuel(self.me['x'], self.me['y'])
         if self.direction is None:
-            self.direction = self.get_random_direction()
+            if closest_karbonite is None:
+                self.log(self.me['unit'] + ': At (' + self.me['x'] + ',' + self.me['y'] + ')')
+                self.direction = self.get_random_direction()
+            else:
+                self.log(self.me['unit'] + ': At (' + self.me['x'] + ',' + self.me['y'] + ')')
+                kd = self.get_direction(self.me['x'], self.me['y'], *closest_karbonite)
+                fd = self.get_direction(self.me['x'], self.me['y'], *closest_fuel)
+                self.log(self.me['unit'] + ': Closest Karbonite (' + closest_karbonite[0] + ',' + closest_karbonite[1] + ') to the ' + kd)
+                self.log(self.me['unit'] + ': Closest Fuel (' + closest_fuel[0] + ',' + closest_fuel[1] + ') to the ' + fd)
+                self.direction = self.get_direction(self.me['x'], self.me['y'], *closest_karbonite)
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
         opposite = self.get_opposite_direction(self.direction)
         offset = self.directions.get(opposite, lambda: None) #lookup (dx,dy) for opposite direction
@@ -308,6 +339,20 @@ class MyRobot(BCAbstractRobot):
             if on_karbonite or on_fuel:
                 #self.log(self.me['unit'] + ': Moving ' + self.direction)
                 self.direction = opposite
+            if self.step % 6:
+                self.log(self.me['unit'] + ': At (' + self.me['x'] + ',' + self.me['y'] + ')')
+                self.log(closest_karbonite)
+                self.log(closest_fuel)
+                if more_karbonite is not None and more_karbonite and closest_fuel is not None:
+                    self.log(self.me['unit'] + ': At (' + self.me['x'] + ',' + self.me['y'] + ')')
+                    fd = self.get_direction(self.me['x'], self.me['y'], *closest_fuel)
+                    self.log(self.me['unit'] + ': Closest Fuel (' + closest_fuel[0] + ',' + closest_fuel[1] + ') to the ' + fd)
+                    self.direction = self.get_direction(self.me['x'], self.me['y'], *closest_fuel)
+                elif more_fuel is not None and more_fuel and closest_karbonite is not None:
+                    self.log(self.me['unit'] + ': At (' + self.me['x'] + ',' + self.me['y'] + ')')
+                    kd = self.get_direction(self.me['x'], self.me['y'], *closest_karbonite)
+                    self.log(self.me['unit'] + ': Closest Karbonite (' + closest_karbonite[0] + ',' + closest_karbonite[1] + ') to the ' + kd)
+                    self.direction = self.get_direction(self.me['x'], self.me['y'], *closest_karbonite)
             return self.random_walk()#self.step % 8
         
     def crusader(self):
