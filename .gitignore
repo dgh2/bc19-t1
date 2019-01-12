@@ -1,5 +1,4 @@
 
 *.bc19
 bc19.properties
-upload.bat
-*.js
+/*.js

@@ -1,30 +1,9 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
-
+import castle from './castle.js';
 const directions = [[0,-1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]];
 
-var step = -1;
+let step = -1;
 var slave = null;
-
-class Castle {
-  turn(self) {
-    self.log("Castle health: " + self.me.health);
-    /*
-    if (step % 10 === 0) {
-      this.log("Building a pilgrim at " + (this.me.x+1) + ", " + (this.me.y+1));
-      return this.buildUnit(SPECS.PILGRIM, 1, 1);
-    } else if (step % 12 === 0) {
-      this.log("Building a crusader at " + (this.me.x+1) + ", " + (this.me.y+1));
-      return this.buildUnit(SPECS.CRUSADER, 1, 1);
-    } else if (step % 15 === 0) {
-      this.log("Building a prophet at " + (this.me.x+1) + ", " + (this.me.y+1));
-      return this.buildUnit(SPECS.PROPHET, 1, 1);
-    } else if (step % 19 === 0) {
-      this.log("Building a preacher at " + (this.me.x+1) + ", " + (this.me.y+1));
-      return this.buildUnit(SPECS.PREACHER, 1, 1);
-    }
-    */
-  }
-}
 
 class Church {
   turn(self) {
@@ -46,7 +25,7 @@ class Church {
 }
 
 class Pilgrim {
-  turn() {
+  turn(self) {
     self.log("Pilgrim health: " + self.me.health);
     var direction = directions[Math.floor(Math.random()*directions.length)];
     return self.move(...direction);
@@ -54,7 +33,7 @@ class Pilgrim {
 }
 
 class Crusader {
-  turn() {
+  turn(self) {
     self.log("Crusader health: " + self.me.health);
     var direction = directions[Math.floor(Math.random()*directions.length)];
     return self.move(...direction);
@@ -62,7 +41,7 @@ class Crusader {
 }
 
 class Prophet {
-  turn() {
+  turn(self) {
     self.log("Prophet health: " + self.me.health);
     var direction = directions[Math.floor(Math.random()*directions.length)];
     return self.move(...direction);
@@ -70,7 +49,7 @@ class Prophet {
 }
 
 class Preacher {
-  turn() {
+  turn(self) {
     self.log("Preacher health: " + self.me.health);
     var direction = directions[Math.floor(Math.random()*directions.length)];
     return self.move(...direction);
@@ -83,7 +62,7 @@ class MyRobot extends BCAbstractRobot {
       //first turn initialization
       switch (this.me.unit) {
         case SPECS.CASTLE:
-          slave = new Castle();
+          slave = castle;
           break;
         case SPECS.CHURCH:
           slave = new Church();
@@ -109,7 +88,7 @@ class MyRobot extends BCAbstractRobot {
       }
     }
     step++;
-    return slave.turn(this);
+    return slave.turn(this, step);
   }
 }
 
