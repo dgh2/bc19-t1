@@ -1,0 +1,19 @@
+{
+  "name": "veww",
+  "version": "1.0.0",
+  "description": "unofficial bc19 offline viewer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "hgarrereyn",
+  "dependencies": {
+    "bc19": "^0.3.16",
+    "browserify": "^16.2.3",
+    "express": "^4.16.4",
+    "npm": "^6.5.0",
+    "npm-api": "^0.4.12",
+    "socket.io": "^2.2.0",
+    "update-notifier": "^2.5.0"
+  }
+}
