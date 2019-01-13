@@ -1,6 +1,7 @@
 from battlecode import BCAbstractRobot, SPECS
 import battlecode as bc
 import random
+import nav
 
 #__pragma__('iconv')
 #__pragma__('tconv')
@@ -10,26 +11,20 @@ import random
 class MyRobot(BCAbstractRobot):
     step = -1
     direction = None
-    directions = {
-        'N': (0,-1),
-        'NE': (1, -1),
-        'E': (1, 0),
-        'SE': (1, 1),
-        'S': (0, 1),
-        'SW': (-1, 1),
-        'W': (-1, 0),
-        'NW': (-1, -1)
-    }
-    opposite_directions = {
-        'N': 'S',
-        'NE': 'SW',
-        'E': 'W',
-        'SE': 'NW',
-        'S': 'N',
-        'SW': 'NE',
-        'W': 'E',
-        'NW': 'SE'
-    }
+    
+    def get_offset_location(self, dx, dy):
+        return (self.me['x'] + dx, self.me['y'] + dy)
+    
+    def get_direction_offset_location(self, direction):
+        return self.get_offset_location(*nav.get_offset(direction))
+    
+    def get_random_valid_direction(self):
+        randomized = list(nav.directions.keys())
+        random.shuffle(randomized)
+        for direction in randomized:
+            if self.traversable(*self.get_direction_offset_location(direction)):
+                return direction
+        return None
     
     def get_direction(self, x1, y1, x2, y2):
         dx = x2-x1
@@ -40,7 +35,7 @@ class MyRobot(BCAbstractRobot):
             dy = dy/abs(dy)
         if dx == 0 and dy == 0:
             return None
-        direction = next(key for key,value in self.directions.items() if value[0] == dx and value[1] == dy)
+        direction = next(key for key,value in nav.directions.items() if value[0] == dx and value[1] == dy)
         #self.log(dx + ',' + dy + ' represents ' + direction)
         return direction
     
@@ -91,19 +86,13 @@ class MyRobot(BCAbstractRobot):
                     closest = (fx,fy)
         return closest
     
-    def get_opposite_direction(self, direction):
-        return self.opposite_directions.get(direction, lambda: None)
-    
-    def get_random_direction(self):
-        return random.choice(list(self.directions.keys()))
-    
     def can_build(self, unit, direction = None):
         required_karbonite = SPECS['UNITS'][SPECS[unit.upper()]].CONSTRUCTION_KARBONITE
         required_fuel = SPECS['UNITS'][SPECS[unit.upper()]].CONSTRUCTION_FUEL
         if not self.check_resources(required_karbonite, required_fuel):
             return False
         if direction is not None:
-            offset = self.directions.get(direction, lambda: None) #lookup (dx,dy) for direction
+            offset = nav.get_offset(direction) #lookup (dx,dy) for direction
             target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
             if not self.traversable(*target):
                 return False
@@ -118,10 +107,10 @@ class MyRobot(BCAbstractRobot):
         
     def walk(self, direction): #take one step in given direction
         if direction is None:
-            direction = self.get_random_direction()
+            direction = nav.get_random_direction()
             self.log(self.me['unit'] + ': (walk) Randomly picks: ' + self.direction)
             #self.log(self.me['unit'] + ': Moving ' + direction)
-        offset = self.directions.get(direction, lambda: None) #lookup (dx,dy) for direction
+        offset = nav.get_offset(direction) #lookup (dx,dy) for direction
         target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
         #self.log(self.me['unit'] + ': At (' + self.me['x'] + ',' + self.me['y'] + ')')
         #self.log(self.me['unit'] + ': Moving ' + direction + ' to (' + (self.me['x'] + offset[0]) + ',' + (self.me['y'] + offset[1]) + ')')
@@ -146,25 +135,25 @@ class MyRobot(BCAbstractRobot):
         if changeDirection:
             self.direction = None
         if self.direction is None:
-            self.direction = self.get_random_direction()
+            self.direction = nav.get_random_direction()
             self.log(self.me['unit'] + ': (random_walk) Randomly picks: ' + self.direction)
-        offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+        offset = nav.get_offset(self.direction) #lookup (dx,dy) for direction
         target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
         #try a few times to get a random traversable direction
         if not self.traversable(*target):
-            self.direction = self.get_random_direction()
+            self.direction = nav.get_random_direction()
             self.log(self.me['unit'] + ': (random_walk) Randomly picks: ' + self.direction)
-            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            offset = nav.get_offset(self.direction) #lookup (dx,dy) for direction
             target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
         if not self.traversable(*target):
-            self.direction = self.get_random_direction()
+            self.direction = nav.get_random_direction()
             self.log(self.me['unit'] + ': (random_walk) Randomly picks: ' + self.direction)
-            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            offset = nav.get_offset(self.direction) #lookup (dx,dy) for direction
             target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
         if not self.traversable(*target):
-            self.direction = self.get_random_direction()
+            self.direction = nav.get_random_direction()
             self.log(self.me['unit'] + ': (random_walk) Randomly picks: ' + self.direction)
-            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            offset = nav.get_offset(self.direction) #lookup (dx,dy) for direction
             target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
         #walk in direction if traversable
         if self.traversable(*target):
@@ -173,7 +162,7 @@ class MyRobot(BCAbstractRobot):
     def build(self, unit, direction):
         if self.can_build(unit, direction):
             self.log(self.me['unit'] + ': Building a ' + unit.lower() + ' to the ' + direction)
-            offset = self.directions.get(direction, lambda: None) #lookup (dx,dy) for direction
+            offset = nav.get_offset(direction) #lookup (dx,dy) for direction
             return self.build_unit(SPECS[unit.upper()], *offset)
     
     def deposit(self, direction):
@@ -189,26 +178,31 @@ class MyRobot(BCAbstractRobot):
             else:
                 self.log(self.me['unit'] + ': Depositing ' + self.me['fuel'] + ' fuel (' + total_k + ',' + total_f + ')')
                 pass
-            offset = self.directions.get(direction, lambda: None) #lookup (dx,dy) for direction
+            offset = nav.get_offset(direction) #lookup (dx,dy) for direction
             return self.give(*offset, self.me['karbonite'], self.me['fuel'])
     
     def castle(self):
         #self.log('CASTLE')
         if self.direction is None:
-            self.direction = self.get_random_direction()
-        offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            closest_karbonite = self.get_closest_karbonite(self.me['x'], self.me['y'])
+            closest_fuel = self.get_closest_fuel(self.me['x'], self.me['y'])
+            if closest_karbonite is not None:
+                self.direction = self.get_direction(self.me['x'], self.me['y'], *closest_karbonite)
+            elif closest_fuel is not None:
+                self.direction = self.get_direction(self.me['x'], self.me['y'], *closest_fuel)
+            else:
+                self.direction = self.get_random_valid_direction()
+                if self.direction is None:
+                    self.log(self.me['unit'] + '(' + self.me['x'] + ',' + self.me['y'] + ')' + ': No valid direction')
+                    return None
+        offset = nav.get_offset(self.direction) #lookup (dx,dy) for direction
         target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
         if not self.traversable(*target):
-            self.direction = self.get_random_direction()
-            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
-            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
-        if not self.traversable(*target):
-            self.direction = self.get_random_direction()
-            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
-            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
-        if not self.traversable(*target):
-            self.direction = self.get_random_direction()
-            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            self.direction = self.get_random_valid_direction()
+            if self.direction is None:
+                self.log(self.me['unit'] + '(' + self.me['x'] + ',' + self.me['y'] + ')' + ': No valid direction')
+                return None
+            offset = nav.get_offset(self.direction) #lookup (dx,dy) for direction
             target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
         if self.traversable(*target):
             church_cost = (SPECS['UNITS'][SPECS['CHURCH']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['CHURCH']].CONSTRUCTION_FUEL)
@@ -218,38 +212,58 @@ class MyRobot(BCAbstractRobot):
             preacher_cost = (SPECS['UNITS'][SPECS['PREACHER']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['PREACHER']].CONSTRUCTION_FUEL)
             old_direction = self.direction
             if self.step < 10 and self.check_resources(church_cost[0] + pilgrim_cost[0], church_cost[1] + pilgrim_cost[1]):
-                self.direction = self.get_random_direction()
+                self.direction = self.get_random_valid_direction()
+                if self.direction is None:
+                    self.log(self.me['unit'] + '(' + self.me['x'] + ',' + self.me['y'] + ')' + ': No valid direction')
+                    return None
                 return self.build('pilgrim', old_direction)
             if self.step % 7 == 0 and self.check_resources(church_cost[0] + pilgrim_cost[0], church_cost[1] + pilgrim_cost[1]):
-                self.direction = self.get_random_direction()
+                self.direction = self.get_random_valid_direction()
+                if self.direction is None:
+                    self.log(self.me['unit'] + '(' + self.me['x'] + ',' + self.me['y'] + ')' + ': No valid direction')
+                    return None
                 return self.build('pilgrim', old_direction)
             if self.step % 5 == 0 and self.check_resources(church_cost[0] + pilgrim_cost[0] + crusader_cost[0], church_cost[1] + pilgrim_cost[1] + crusader_cost[1]):
-                self.direction = self.get_random_direction()
+                self.direction = self.get_random_valid_direction()
+                if self.direction is None:
+                    self.log(self.me['unit'] + '(' + self.me['x'] + ',' + self.me['y'] + ')' + ': No valid direction')
+                    return None
                 return self.build('crusader', old_direction)
             if self.step % 3 == 0 and self.check_resources(2*church_cost[0] + prophet_cost[0], 2*church_cost[1] + prophet_cost[1]):
-                self.direction = self.get_random_direction()
+                self.direction = self.get_random_valid_direction()
+                if self.direction is None:
+                    self.log(self.me['unit'] + '(' + self.me['x'] + ',' + self.me['y'] + ')' + ': No valid direction')
+                    return None
                 return self.build('prophet', old_direction)
             if self.step % 1 == 0 and self.check_resources(2*church_cost[0] + preacher_cost[0], 2*church_cost[1] + preacher_cost[1]):
-                self.direction = self.get_random_direction()
+                self.direction = self.get_random_valid_direction()
+                if self.direction is None:
+                    self.log(self.me['unit'] + '(' + self.me['x'] + ',' + self.me['y'] + ')' + ': No valid direction')
+                    return None
                 return self.build('preacher', old_direction)
         
     def church(self):
         #self.log('CHURCH')
         if self.direction is None:
-            self.direction = self.get_random_direction()
-        offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            closest_karbonite = self.get_closest_karbonite(self.me['x'], self.me['y'])
+            closest_fuel = self.get_closest_fuel(self.me['x'], self.me['y'])
+            if closest_fuel is not None:
+                self.direction = self.get_direction(self.me['x'], self.me['y'], *closest_fuel)
+            elif closest_karbonite is not None:
+                self.direction = self.get_direction(self.me['x'], self.me['y'], *closest_karbonite)
+            else:
+                self.direction = self.get_random_valid_direction()
+                if self.direction is None:
+                    self.log(self.me['unit'] + '(' + self.me['x'] + ',' + self.me['y'] + ')' + ': No valid direction')
+                    return None
+        offset = nav.get_offset(self.direction) #lookup (dx,dy) for direction
         target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
         if not self.traversable(*target):
-            self.direction = self.get_random_direction()
-            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
-            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
-        if not self.traversable(*target):
-            self.direction = self.get_random_direction()
-            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
-            target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
-        if not self.traversable(*target):
-            self.direction = self.get_random_direction()
-            offset = self.directions.get(self.direction, lambda: None) #lookup (dx,dy) for direction
+            self.direction = self.get_random_valid_direction()
+            if self.direction is None:
+                self.log(self.me['unit'] + '(' + self.me['x'] + ',' + self.me['y'] + ')' + ': No valid direction')
+                return None
+            offset = nav.get_offset(self.direction) #lookup (dx,dy) for direction
             target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
         if self.traversable(*target):
             church_cost = (SPECS['UNITS'][SPECS['CHURCH']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['CHURCH']].CONSTRUCTION_FUEL)
@@ -259,19 +273,34 @@ class MyRobot(BCAbstractRobot):
             preacher_cost = (SPECS['UNITS'][SPECS['PREACHER']].CONSTRUCTION_KARBONITE, SPECS['UNITS'][SPECS['PREACHER']].CONSTRUCTION_FUEL)
             old_direction = self.direction
             if self.step < 10 and self.check_resources(church_cost[0] + pilgrim_cost[0], church_cost[1] + pilgrim_cost[1]):
-                self.direction = self.get_random_direction()
+                self.direction = self.get_random_valid_direction()
+                if self.direction is None:
+                    self.log(self.me['unit'] + '(' + self.me['x'] + ',' + self.me['y'] + ')' + ': No valid direction')
+                    return None
                 return self.build('pilgrim', old_direction)
             if self.step % 7 == 0 and self.check_resources(church_cost[0] + pilgrim_cost[0], church_cost[1] + pilgrim_cost[1]):
-                self.direction = self.get_random_direction()
+                self.direction = self.get_random_valid_direction()
+                if self.direction is None:
+                    self.log(self.me['unit'] + '(' + self.me['x'] + ',' + self.me['y'] + ')' + ': No valid direction')
+                    return None
                 return self.build('pilgrim', old_direction)
             if self.step % 5 == 0 and self.check_resources(church_cost[0] + pilgrim_cost[0] + crusader_cost[0], church_cost[1] + pilgrim_cost[1] + crusader_cost[1]):
-                self.direction = self.get_random_direction()
+                self.direction = self.get_random_valid_direction()
+                if self.direction is None:
+                    self.log(self.me['unit'] + '(' + self.me['x'] + ',' + self.me['y'] + ')' + ': No valid direction')
+                    return None
                 return self.build('crusader', old_direction)
             if self.step % 3 == 0 and self.check_resources(2*church_cost[0] + prophet_cost[0], 2*church_cost[1] + prophet_cost[1]):
-                self.direction = self.get_random_direction()
+                self.direction = self.get_random_valid_direction()
+                if self.direction is None:
+                    self.log(self.me['unit'] + '(' + self.me['x'] + ',' + self.me['y'] + ')' + ': No valid direction')
+                    return None
                 return self.build('prophet', old_direction)
             if self.step % 1 == 0 and self.check_resources(2*church_cost[0] + preacher_cost[0], 2*church_cost[1] + preacher_cost[1]):
-                self.direction = self.get_random_direction()
+                self.direction = self.get_random_valid_direction()
+                if self.direction is None:
+                    self.log(self.me['unit'] + '(' + self.me['x'] + ',' + self.me['y'] + ')' + ': No valid direction')
+                    return None
                 return self.build('preacher', old_direction)
         
     def pilgrim(self):
@@ -296,11 +325,11 @@ class MyRobot(BCAbstractRobot):
                 self.log(self.me['unit'] + ': Targeting fuel to the ' + self.direction)
                 pass
         if self.direction is None:
-            self.direction = self.get_random_direction()
+            self.direction = nav.get_random_direction()
             self.log(self.me['unit'] + ': Randomly picks: ' + self.direction)
             #self.log(self.me['unit'] + ': Moving ' + self.direction)
-        opposite = self.get_opposite_direction(self.direction)
-        offset = self.directions.get(opposite, lambda: None) #lookup (dx,dy) for opposite direction
+        opposite = nav.get_opposite_direction(self.direction)
+        offset = nav.get_offset(opposite) #lookup (dx,dy) for opposite direction
         target = (self.me['x'] + offset[0], self.me['y'] + offset[1]) #calculate (x,y) from current location and (dx,dy)
         home = None #try to find a castle or church behind this robot
         id = -1
@@ -352,7 +381,7 @@ class MyRobot(BCAbstractRobot):
                     self.log(self.me['unit'] + ': Targeting fuel to the ' + self.direction)
                     pass
             if self.direction is None:
-                self.direction = self.get_random_direction()
+                self.direction = nav.get_random_direction()
                 self.log(self.me['unit'] + ': Randomly picks: ' + self.direction)
         return self.random_walk()
         
