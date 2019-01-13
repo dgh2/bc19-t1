@@ -2,7 +2,7 @@ import {BCAbstractRobot, SPECS} from 'battlecode';
 
 const castle = {};
 
-castle.turn = (self, step) => {
+castle.turn = (self, step, directionz, directions, opposite_directions) => {
   self.log("Castle health: " + self.me.health);
   self.log("step: " + step);
   if (step % 10 === 0) {

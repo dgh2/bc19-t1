@@ -2,7 +2,7 @@ import {BCAbstractRobot, SPECS} from 'battlecode';
 
 const church = {};
 
-church.turn = (self, step) => {
+church.turn = (self, step, directionz, directions, opposite_directions) => {
   self.log("Church health: " + self.me.health);
   if (step % 10 === 0) {
     self.log("Building a pilgrim at " + (self.me.x+1) + ", " + (self.me.y+1));
