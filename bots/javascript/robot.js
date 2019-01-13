@@ -323,25 +323,7 @@ var step = -1;
                         return self.random_walk(self.step % 4);
                     }
                 }
-            }
-        
-
-    
-//     def turnStart(self):
-//         #code common to ALL unit types BEFORE unit specific code
-//         self.step += 1
-        
-//     def turnEnd(self):
-//         #code common to ALL unit types AFTER unit specific code
-//         pass
-        
-//     def turn(self):
-//         self.turnStart()
-//         returnValue = self.runUnitFunction(self.me['unit'])
-//         self.turnEnd()
-//         return returnValue
-
-// robot = myRobot
+	   }
 
             class crusader (self) {
                 //self.log('CRUSADER')
