@@ -13,13 +13,15 @@ class MyRobot extends BCAbstractRobot {
         super();
         this.slave = null;
         this.unit = "";
-        this.step = -1;
-        this.oldLog = this.log;
-        this.log = function(message) {
-            let loc = "(" + this.me.x + "," + this.me.y + ")";
-            let prefix = this.unit + " " + loc + ": ";
-            this.oldLog(prefix + message)
-        }
+        this.step = -1; //add step to self
+        this.oldLog = this.log; //backup original self.log at self.oldLog
+        this.log = this.newLog; //replace self.log calls with self.newLog calls
+    }
+    
+    newLog(message) {
+        let loc = "(" + this.me.x + "," + this.me.y + ")";
+        let prefix = this.unit + " " + loc + ": ";
+        this.oldLog(prefix + message); //call back to original self.log now at self.oldLog
     }
     
     turn() {
