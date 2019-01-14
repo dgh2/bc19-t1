@@ -6,8 +6,8 @@ nav.compass = [
     ['SW', 'S', 'SE'],
 ];
 
-nav.rotateArr = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-nav.rotateArrInd = {
+nav.dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+nav.dirsInd = {
     'N': 0,
     'NE': 1,
     'E': 2,    
@@ -29,30 +29,66 @@ nav.compassToCoordinate = {
     'SW': {x: -1, y: 1},
 };
 
+nav.getRandomCompassDirs = () => {
+    var dirs = nav.dirs.slice();
+    var currentIndex = dirs.length, temporaryValue, randomIndex;
+    // While there remain elements to shuffle...
+    while (0 !== currentIndex) {
+        // Pick a remaining element...
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex -= 1;
+        // And swap it with the current element.
+        temporaryValue = dirs[currentIndex];
+        dirs[currentIndex] = dirs[randomIndex];
+        dirs[randomIndex] = temporaryValue;
+    }
+    return dirs;
+};
+
+nav.getRandomCompassDir = () => {
+    return nav.getRandomCompassDirs()[0];
+}
+
+nav.getRandomDir = () => {
+    return nav.toDir(nav.getRandomCompassDir());
+}
+
 nav.toCompassDir = (coordinateDir) => {
     return nav.compass[coordinateDir.y + 1][coordinateDir.x + 1];
 };
 
-nav.toCoordinateDir = (compassDir) => {
+nav.toDir = (compassDir) => {
     return nav.compassToCoordinate[compassDir];
 };
 
 nav.randomCompassDir = () => {
-    const roll = Math.floor(Math.random() * nav.rotateArr.length);
-    const compassDir = nav.rotateArr[roll];
+    const roll = Math.floor(Math.random() * nav.dirs.length);
+    const compassDir = nav.dirs[roll];
     return compassDir;
 };
 
-nav.randomCoordinateDir = () => {
+nav.randomDir = () => {
     const randomCompassDir = nav.randomCompassDir();
-    const randomCoordinateDir = nav.toCoordinateDir(randomCompassDir);
-    return randomCoordinateDir;
+    const randomDir = nav.toDir(randomCompassDir);
+    return randomDir;
+};
+
+nav.randomValidDir = (self) => {
+    var randomCompassDirs = nav.getRandomCompassDirs();
+    for (var i = 0; i < randomCompassDirs.length; i++) {
+        var randomCompassDir = randomCompassDirs[i];
+        var randomDir = nav.toDir(randomCompassDir);
+        if (nav.isPassable(self, {x: self.me.x + randomDir.x, y: self.me.y + randomDir.y})) {
+            return randomDir;
+        }
+    }
+    return null;
 };
 
 nav.rotate = (coordinateDir, amount) => {
     const compassDir = nav.toCompassDir(coordinateDir);
-    const rotateCompassDir = nav.rotateArr[(nav.rotateArrInd[compassDir] + amount) % nav.rotateArr.len];
-    return nav.toCoordinateDir(rotateCompassDir);
+    const rotateCompassDir = nav.dirs[(nav.dirsInd[compassDir] + amount) % nav.dirs.len];
+    return nav.toDir(rotateCompassDir);
 };
 
 nav.reflect = (loc, fullMap, isHorizontalReflection) => {
@@ -94,20 +130,25 @@ nav.getDir = (start, target) => {
     return newDir;
 };
 
-nav.isPassable = (loc, fullMap, robotMap) => {
+nav.isPassable = (self, loc) => {
     const {x, y} = loc;
-    const mapLen = fullMap.length;
-    if (x >= mapLen || x < 0) {
-        return false;
-    } else if (y >= mapLen || y < 0) {
-        return false;
-    } else if (robotMap[y][x] > 0 || !fullMap[y][x]) {
-        return false;
-    } else {
-        return true;
+    const passableMap = self.getPassableMap();
+    const robotMap = self.getVisibleRobotMap();
+    if (x < 0 || x >= passableMap.length) {
+        return false; //loc out of x bounds
     }
+    if (y < 0 || y >= passableMap.length) {
+        return false; //loc out of y bounds
+    }
+    if (!passableMap[y][x]) {
+        return false; //loc occupied or not passable
+    }
+    if (robotMap[y][x] > 0) {
+        return false; //loc occupied or not passable
+    }
+    return true;
 };
-
+/*
 nav.applyDir = (loc, coordinateDir) => {
     return {
         x: loc.x + coordinateDir.x,
@@ -115,13 +156,13 @@ nav.applyDir = (loc, coordinateDir) => {
     };
 };
 
-nav.goto = (loc, destination, fullMap, robotMap) => {
+nav.goto = (self, loc, destination, fullMap, robotMap) => {
     let goalDir = nav.getDir(loc, destination);
     if (goalDir.x === 0 && goalDir.y === 0) {
         return goalDir;
     }
     let tryDir = 0;
-    while (!nav.isPassable(nav.applyDir(loc, goalDir), fullMap, robotMap) && tryDir < 8) {
+    while (!nav.isPassable(self, nav.applyDir(loc, goalDir), fullMap, robotMap) && tryDir < 8) {
         goalDir = nav.rotate(goalDir, 1);
         tryDir++;
     }
@@ -131,7 +172,7 @@ nav.goto = (loc, destination, fullMap, robotMap) => {
 nav.sqDist = (start, end) => {
     return Math.pow(start.x - end.x, 2) + Math.pow(start.y - end.y, 2);
 };
-
+*/
 /*
 def traversable(self, x, y, ignore_robots = False):
     if x < 0 or x >= len(self.map[y]):
