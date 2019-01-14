@@ -7,41 +7,48 @@ import crusader from './crusader.js';
 import prophet from './prophet.js';
 import preacher from './preacher.js';
 
-var slave = null;
-var step = -1;
-var prefix = "";
-var unit = "";
-var location = "";
 
 class MyRobot extends BCAbstractRobot {
+    constructor() {
+        super();
+        this.slave = null;
+        this.unit = "";
+        this.step = -1;
+        this.oldLog = this.log;
+        this.log = function(message) {
+            let loc = "(" + this.me.x + "," + this.me.y + ")";
+            let prefix = this.unit + " " + loc + ": ";
+            this.oldLog(prefix + message)
+        }
+    }
+    
     turn() {
-        if (step == -1) {
-            var prefix = "";
+        if (this.step == -1) {
             //first turn initialization
             switch (this.me.unit) {
                 case SPECS.CASTLE:
-                    unit = "Castle";
-                    slave = castle;
+                    this.unit = "Castle";
+                    this.slave = castle;
                     break;
                 case SPECS.CHURCH:
-                    unit = "Church";
-                    slave = church;
+                    this.unit = "Church";
+                    this.slave = church;
                     break;
                 case SPECS.PILGRIM:
-                    unit = "Pilgrim";
-                    slave = pilgrim;
+                    this.unit = "Pilgrim";
+                    this.slave = pilgrim;
                     break;
                 case SPECS.CRUSADER:
-                    unit = "Crusader";
-                    slave = crusader;
+                    this.unit = "Crusader";
+                    this.slave = crusader;
                     break;
                 case SPECS.PROPHET:
-                    unit = "Prophet";
-                    slave = prophet;
+                    this.unit = "Prophet";
+                    this.slave = prophet;
                     break;
                 case SPECS.PREACHER:
-                    unit = "Preacher";
-                    slave = preacher;
+                    this.unit = "Preacher";
+                    this.slave = preacher;
                     break;
                 default:
                     r = this.me;
@@ -49,12 +56,10 @@ class MyRobot extends BCAbstractRobot {
                         this.log("Invalid unit type: " + r.unit);
                         throw new TypeError("Invalid unit type: " + r.unit);
                     }
-              }
+            }
         }
-        step++;
-        location = "(" + this.me.x + "," + this.me.y + ")";
-        prefix = unit + " - " + location + ": ";
-        return slave.turn(this, step, prefix);
+        this.step++;
+        return this.slave.turn(this);
     }
 }
 

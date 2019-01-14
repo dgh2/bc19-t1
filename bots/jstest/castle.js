@@ -4,12 +4,13 @@ import nav from './nav.js';
 const castle = {};
 var dir = null;
 
-castle.turn = (self, step, prefix) => {
-    self.log(prefix + "Health: " + self.me.health);
-    self.log(prefix + "step: " + step);
+castle.turn = (self) => {
+    self.log("Health: " + self.me.health);
+    let step = self.step;
+    self.log("step: " + step);
     dir = nav.randomValidDir(self);
     if (dir === null) {
-        self.log(prefix + "No valid directions");
+        self.log("No valid directions");
         return;
     }
     var loc = {x: self.me.x + dir.x, y: self.me.y + dir.y};

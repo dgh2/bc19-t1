@@ -29,7 +29,7 @@ nav.compassToDir = {
     'SW': {x: -1, y: 1},
 };
 
-nav.getRandomCompassDirs = () => {
+nav.getRandomCompassDirs = () => { //Get a list of all random compass directions ['W', 'NE', 'S', ...]
     var dirs = nav.dirs.slice();
     var currentIndex = dirs.length, temporaryValue, randomIndex;
     // While there remain elements to shuffle...
@@ -45,21 +45,21 @@ nav.getRandomCompassDirs = () => {
     return dirs;
 };
 
-nav.getRandomCompassDir = () => {
-    return nav.getRandomCompassDirs()[0];
-}
-
-nav.getRandomDir = () => {
-    return nav.toDir(nav.getRandomCompassDir());
-}
-
-nav.toCompassDir = (coordinateDir) => {
+nav.toCompassDir = (coordinateDir) => { //convert coordinate dir like {x: -1, y: -1} into compass dir like 'NW'
     return nav.compass[coordinateDir.y + 1][coordinateDir.x + 1];
 };
 
-nav.toDir = (compassDir) => {
+nav.toDir = (compassDir) => { //convert compass dir like 'NW' into coordinate dir like {x: -1, y: -1}
     return nav.compassToDir[compassDir];
 };
+
+nav.getRandomCompassDir = () => { //Get random compass direction like 'N', 'NE', 'E', ...
+    return nav.dirs[Math.floor(Math.random() * nav.dirs.length)];
+}
+
+nav.getRandomDir = () => { //Get random coordinate direction like {x: -1, y: -1}, {x: 0, y: -1}, ...
+    return nav.toDir(nav.getRandomCompassDir());
+}
 
 nav.randomCompassDir = () => {
     const roll = Math.floor(Math.random() * nav.dirs.length);
@@ -67,17 +67,10 @@ nav.randomCompassDir = () => {
     return compassDir;
 };
 
-nav.randomDir = () => {
-    const randomCompassDir = nav.randomCompassDir();
-    const randomDir = nav.toDir(randomCompassDir);
-    return randomDir;
-};
-
 nav.randomValidDir = (self) => {
     var randomCompassDirs = nav.getRandomCompassDirs();
     for (var i = 0; i < randomCompassDirs.length; i++) {
-        var randomCompassDir = randomCompassDirs[i];
-        var randomDir = nav.toDir(randomCompassDir);
+        var randomDir = nav.toDir(randomCompassDirs[i]);
         if (nav.isPassable(self, nav.applyDir(self.me, randomDir))) {
             return randomDir;
         }

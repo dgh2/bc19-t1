@@ -4,11 +4,12 @@ import nav from './nav.js';
 const church = {};
 var dir = null;
 
-church.turn = (self, step, prefix) => {
-    self.log(prefix + "Health: " + self.me.health);
+church.turn = (self) => {
+    self.log("Health: " + self.me.health);
+    let step = self.step;
     dir = nav.randomValidDir(self);
     if (dir === null) {
-        self.log(prefix + "No valid directions");
+        self.log("No valid directions");
         return;
     }
     var loc = {x: self.me.x + dir.x, y: self.me.y + dir.y};
