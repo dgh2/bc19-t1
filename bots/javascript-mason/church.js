@@ -1,8 +1,9 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
+import nav from './nav.js';
 
 const church = {};
 
-church.turn = (self, step, directionz, directions, opposite_directions) => {
+church.turn = (self, step) => {
   self.log("Church health: " + self.me.health);
   if (step % 10 === 0) {
     self.log("Building a pilgrim at " + (self.me.x+1) + ", " + (self.me.y+1));

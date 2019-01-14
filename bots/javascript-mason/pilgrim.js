@@ -1,10 +1,11 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
+import nav from './nav.js';
 
 const pilgrim = {};
 
-pilgrim.turn = (self, step, directionz, directions, opposite_directions) => {
+pilgrim.turn = (self, step) => {
   self.log("Pilgrim health: " + self.me.health);
-  var direction = directionz[Math.floor(Math.random()*directions.length)];
+  var direction = nav.directionz[Math.floor(Math.random()*8)];
   return self.move(...direction);
 }
 

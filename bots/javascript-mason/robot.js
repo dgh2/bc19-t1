@@ -61,7 +61,7 @@ class MyRobot extends BCAbstractRobot {
       }
     }
     step++;
-    return slave.turn(this, step, directionz, directions, opposite_directions);
+    return slave.turn(this, step);
   }
 }
 
