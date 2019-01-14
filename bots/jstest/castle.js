@@ -3,9 +3,8 @@ import nav from './nav.js';
 
 const castle = {};
 
-castle.turn = (self, step) => {
-    var prefix = "(" + self.me.x + "," + self.me.y + "): ";
-    self.log(prefix + "Castle health: " + self.me.health);
+castle.turn = (self, step, prefix) => {
+    self.log(prefix + "Health: " + self.me.health);
     self.log(prefix + "step: " + step);
     var direction = nav.randomCoordinateDir(self);
     var location = {x: self.me.x + direction.x, y: self.me.y + direction.y};

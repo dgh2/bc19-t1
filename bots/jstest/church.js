@@ -3,8 +3,8 @@ import nav from './nav.js';
 
 const church = {};
 
-church.turn = (self, step) => {
-    self.log("Church health: " + self.me.health);
+church.turn = (self, step, prefix) => {
+    self.log(prefix + "Health: " + self.me.health);
     var direction = nav.randomCoordinateDir();
     var location = {x: self.me.x + direction.x, y: self.me.y + direction.y};
     if (step % 10 === 0) {

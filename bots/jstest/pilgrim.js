@@ -3,8 +3,8 @@ import nav from './nav.js';
 
 const pilgrim = {};
 
-pilgrim.turn = (self, step) => {
-    self.log("Pilgrim health: " + self.me.health);
+pilgrim.turn = (self, step, prefix) => {
+    self.log(prefix + "Health: " + self.me.health);
     var direction = nav.randomCoordinateDir();
     return self.move(direction.x, direction.y);
 }
