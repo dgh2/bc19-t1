@@ -18,7 +18,7 @@ nav.dirsInd = {
     'NW': 7,
 };
 
-nav.compassToCoordinate = {
+nav.compassToDir = {
     'N': {x: 0, y: -1},
     'NE': {x: 1, y: -1},
     'NW': {x: -1, y: -1},
@@ -58,7 +58,7 @@ nav.toCompassDir = (coordinateDir) => {
 };
 
 nav.toDir = (compassDir) => {
-    return nav.compassToCoordinate[compassDir];
+    return nav.compassToDir[compassDir];
 };
 
 nav.randomCompassDir = () => {
@@ -78,18 +78,20 @@ nav.randomValidDir = (self) => {
     for (var i = 0; i < randomCompassDirs.length; i++) {
         var randomCompassDir = randomCompassDirs[i];
         var randomDir = nav.toDir(randomCompassDir);
-        if (nav.isPassable(self, {x: self.me.x + randomDir.x, y: self.me.y + randomDir.y})) {
+        if (nav.isPassable(self, nav.applyDir(self.me, randomDir))) {
             return randomDir;
         }
     }
     return null;
 };
 
+/*
 nav.rotate = (coordinateDir, amount) => {
     const compassDir = nav.toCompassDir(coordinateDir);
     const rotateCompassDir = nav.dirs[(nav.dirsInd[compassDir] + amount) % nav.dirs.len];
     return nav.toDir(rotateCompassDir);
 };
+*/
 
 nav.reflect = (loc, fullMap, isHorizontalReflection) => {
     const mapLen = fullMap.length;
@@ -148,14 +150,15 @@ nav.isPassable = (self, loc) => {
     }
     return true;
 };
-/*
-nav.applyDir = (loc, coordinateDir) => {
+
+nav.applyDir = (loc, dir) => {
     return {
-        x: loc.x + coordinateDir.x,
-        y: loc.y + coordinateDir.y,
+        x: loc.x + dir.x,
+        y: loc.y + dir.y,
     };
 };
 
+/*
 nav.goto = (self, loc, destination, fullMap, robotMap) => {
     let goalDir = nav.getDir(loc, destination);
     if (goalDir.x === 0 && goalDir.y === 0) {
@@ -168,22 +171,20 @@ nav.goto = (self, loc, destination, fullMap, robotMap) => {
     }
     return goalDir;
 };
+*/
 
 nav.sqDist = (start, end) => {
     return Math.pow(start.x - end.x, 2) + Math.pow(start.y - end.y, 2);
 };
-*/
-/*
-def traversable(self, x, y, ignore_robots = False):
-    if x < 0 or x >= len(self.map[y]):
-        return False #out of x bounds
-    if y < 0 or y >= len(self.map):
-        return False #out of y bounds
-    if not self.map[y][x]:
-        return False #target is an obstacle
-    if not ignore_robots and self.get_visible_robot_map()[y][x] > 0:
-        return False #target is blocked by a robot and we care
-    return True
-*/
+
+nav.check_resources = (self, resources) => {
+    if (self.karbonite < resources.karbonite) {
+        return false; //not enough karbonite
+    }
+    if (self.fuel < resources.fuel) {
+        return false; //not enough fuel
+    }
+    return true;
+}
 
 export default nav;
