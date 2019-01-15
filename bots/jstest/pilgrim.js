@@ -107,12 +107,12 @@ pilgrim.turn = (self) => {
        if (more_karbonite && nav.exists(closestFuel) && closestFuel.length) {
             dir = nav.getDir(self.me, closestFuel[0]);
             if (nav.exists(dir) && dir != oldDir) {
-                self.log("More fuel. Targeting nearby fuel to the " + nav.toCompassDir(dir));
+                self.log("More karbonite. Targeting nearby fuel to the " + nav.toCompassDir(dir));
             }
         } else if (nav.exists(closestKarbonite) && closestKarbonite.length) {
             dir = nav.getDir(self.me, closestKarbonite[0]);
             if (nav.exists(dir) && dir != oldDir) {
-                self.log("More karbonite. Targeting nearby karbonite to the " + nav.toCompassDir(dir));
+                self.log("More fuel. Targeting nearby karbonite to the " + nav.toCompassDir(dir));
             }
         }
     } else if (more_karbonite && nav.exists(closestFuel) && closestFuel.length) {
@@ -127,14 +127,12 @@ pilgrim.turn = (self) => {
         }
     }
     if (nav.exists(dir) && !nav.isPassable(self, nav.applyDir(self.me, dir))) {
+        self.log("Not passable. Clearing direction.");
         dir = null;
-        if (dir != oldDir) {
-            self.log("Not passable. Clearing direction.");
-        }
     }
     if (!nav.exists(dir)) {
         dir = nav.randomValidDir(self);
-        if (nav.exists(dir) && dir != oldDir) {
+        if (nav.exists(dir)) {
             self.log("Picking random direction: " + nav.toCompassDir(dir));
         }
     }
