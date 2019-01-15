@@ -16,7 +16,7 @@ church.turn = (self) => {
     let crusader_resources = {karbonite: castle_karbonite + crusader_karbonite, fuel: castle_fuel + crusader_fuel};
     
     dir = nav.randomValidDir(self);
-    if (nav.exists(dir)) {
+    if (!nav.exists(dir)) {
         self.log("No valid directions");
         return;
     }
