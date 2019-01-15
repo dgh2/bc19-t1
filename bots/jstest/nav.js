@@ -1,3 +1,4 @@
+import {SPECS} from 'battlecode';
 const nav = {};
 
 nav.compass = [
@@ -10,7 +11,7 @@ nav.dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 nav.dirsInd = {
     'N': 0,
     'NE': 1,
-    'E': 2,    
+    'E': 2,
     'SE': 3,
     'S': 4,
     'SW': 5,
@@ -129,7 +130,7 @@ nav.getDir = (start, target) => {
     return newDir;
 };
 
-nav.isPassable = (self, loc) => {
+nav.isPassable = (self, loc) => { //{x:self.x , y:self.y} passed in as the variable loc
     const {x, y} = loc;
     const passableMap = self.getPassableMap();
     const robotMap = self.getVisibleRobotMap();
@@ -195,7 +196,7 @@ nav.getVisibleRobots = (self, team = null, units = null) => {
     let robots = self.getVisibleRobots();
     robots = robots.filter(function (robot) {
         return self.isVisible(robot)
-            && (team === null || robot.team == team) 
+            && (team === null || robot.team == team)
             && (units === null || units === robot.unit || units.includes(robot.unit));
     });
     if (nav.exists(robots) && robots.length) {
@@ -255,7 +256,7 @@ nav.findClosestFuel = (self, exclusionList) => {
     }
 }
 
-nav.check_resources = (self, resources) => {
+nav.checkResources = (self, resources) => {
     if (self.karbonite < resources.karbonite) {
         return false; //not enough karbonite
     }
@@ -263,6 +264,23 @@ nav.check_resources = (self, resources) => {
         return false; //not enough fuel
     }
     return true;
+}
+
+//takes compass direction
+nav.canBuild = (self, type, direction) => {
+  required_karbonite = SPECS['UNITS'][SPECS[type.upper()]].CONSTRUCTION_KARBONITE;
+  required_fuel = SPECS['UNITS'][SPECS[type.upper()]].CONSTRUCTION_FUEL;
+  if (!nav.checkResources(self, {karbonite: required_karbonite , fuel: required_fuel} )) {
+    return false;
+  }
+  if (direction) { //would only skip if falsy
+    offset = nav.toDir(direction); //coordinate dir like {x: -1, y: -1}
+    target = { x: self.x + offset.x , y: self.y + offset.y }; // as {x: , y: }
+    if (!nav.isPassable(self, target)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export default nav;
