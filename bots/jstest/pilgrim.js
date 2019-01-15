@@ -17,6 +17,7 @@ pilgrim.turn = (self) => {
     let more_karbonite = self.karbonite > self.fuel;
     let more_fuel = self.fuel >= self.karbonite;
     let near_wanted_resource = false;
+    let visible_wanted_resource = false;
     let has_karbonite = self.me.karbonite;
     let has_fuel = self.me.fuel;
     let has_resources = has_karbonite || has_fuel;
@@ -24,15 +25,11 @@ pilgrim.turn = (self) => {
     let fuel_full = self.me.fuel >= self.specs.FUEL_CAPACITY;
     let on_karbonite = self.getKarboniteMap()[self.me.y][self.me.x];
     let on_fuel = self.getFuelMap()[self.me.y][self.me.x];
-    let on_wanted_resource = (more_karbonite ? on_fuel : on_karbonite);
     let on_resource = on_karbonite || on_fuel;
+    let on_wanted_resource = (more_karbonite ? on_fuel : on_karbonite);
     let has_base = false;
     let at_base = false;
     let near_base = false;
-    
-    if (nav.exists(dir) && !nav.isPassable(self, nav.applyDir(self.me, dir))) {
-        dir = null;
-    }
     
     if (nav.exists(closestBases) && closestBases.length) {
         has_base = true;
@@ -54,6 +51,9 @@ pilgrim.turn = (self) => {
         if (distance <= 3**2 && more_fuel) {
             near_wanted_resource = true;
         }
+        if (self.getVisibleRobotMap()[closest.y][closest.x] > -1 && more_fuel) {
+            visible_wanted_resource = true;
+        }
         let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
         //self.log("Closest karbonite: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
     }
@@ -63,6 +63,9 @@ pilgrim.turn = (self) => {
         closestFuelDistance = distance;
         if (distance <= 3**2 && more_karbonite) {
             near_wanted_resource = true;
+        }
+        if (self.getVisibleRobotMap()[closest.y][closest.x] > -1 && more_karbonite) {
+            visible_wanted_resource = true;
         }
         let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
         //self.log("Closest fuel: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
@@ -96,6 +99,12 @@ pilgrim.turn = (self) => {
         }
     }
     
+    if (nav.exists(dir) && nav.isPassable(self, nav.applyDir(self.me, dir))
+            && !visible_wanted_resource && !has_base && !on_resource) {
+        self.log("Continuing in the previous direction, " + nav.toCompassDir(dir));
+        return self.move(dir.x, dir.y);
+    }
+    
     let oldDir = dir;
     if (nav.exists(closestBases) && closestBases.length && has_resources && near_base) {
         dir = nav.getDir(self.me, closestBases[0]);
@@ -127,7 +136,7 @@ pilgrim.turn = (self) => {
         }
     }
     if (nav.exists(dir) && !nav.isPassable(self, nav.applyDir(self.me, dir))) {
-        self.log("Not passable. Clearing direction.");
+        self.log("Chosen direction is not passable. Clearing direction.");
         dir = null;
     }
     if (!nav.exists(dir)) {

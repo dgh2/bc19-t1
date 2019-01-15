@@ -28,7 +28,7 @@ castle.turn = (self) => {
     }
     let oldDir = dir;
     var loc = {x: self.me.x + dir.x, y: self.me.y + dir.y};
-    if (step <= 1000) { //(step % 10 === 0)
+    if (step <= 10 || step % 10 === 0) { //(step % 10 === 0)
         if (nav.canBuild(self,SPECS.PILGRIM,oldDir)) {
           dir = nav.randomValidDir(self);
           self.log("Building a pilgrim at " + loc.x + "," + loc.y);
