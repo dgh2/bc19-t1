@@ -14,10 +14,12 @@ castle.turn = (self) => {
         return;
     }
     var loc = {x: self.me.x + dir.x, y: self.me.y + dir.y};
-    if (step % 10 === 0) {
+    if (step <= 1000) { //(step % 10 === 0)
         dir = nav.randomValidDir(self);
-        self.log("Building a pilgrim at " + loc.x + "," + loc.y);
-        return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
+        if (nav.canBuild(self,SPECS.PILGRIM,dir)) {
+          self.log("Building a pilgrim at " + loc.x + "," + loc.y);
+          return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
+        }
     } else if (step % 12 === 0) {
         dir = nav.randomValidDir(self);
         self.log("Building a crusader at " + loc.x + "," + loc.y);

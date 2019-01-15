@@ -183,14 +183,16 @@ nav.checkResources = (self, resources) => {
 
 //takes compass direction
 nav.canBuild = (self, type, direction) => {
-  required_karbonite = SPECS['UNITS'][SPECS[type.upper()]].CONSTRUCTION_KARBONITE;
-  required_fuel = SPECS['UNITS'][SPECS[type.upper()]].CONSTRUCTION_FUEL;
+  required_karbonite = SPECS['UNITS'][type].CONSTRUCTION_KARBONITE;
+  required_fuel = SPECS['UNITS'][type].CONSTRUCTION_FUEL;
   if (!nav.checkResources(self, {karbonite: required_karbonite , fuel: required_fuel} )) {
     return false;
   }
   if (direction) { //would only skip if falsy
     offset = nav.toDir(direction); //coordinate dir like {x: -1, y: -1}
-    target = { x: self.x + offset.x , y: self.y + offset.y }; // as {x: , y: }
+    ehx = self.me.x + offset.x;
+    whyy = self.me.y + offset.y;
+    target = { x: ehx , y: whyy }; // as {x: , y: }
     if (!nav.isPassable(self, target)) {
       return false;
     }
