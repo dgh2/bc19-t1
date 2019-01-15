@@ -11,7 +11,7 @@ nav.dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 nav.dirsInd = {
     'N': 0,
     'NE': 1,
-    'E': 2,    
+    'E': 2,
     'SE': 3,
     'S': 4,
     'SW': 5,
@@ -29,6 +29,10 @@ nav.compassToDir = {
     'SE': {x: 1, y: 1},
     'SW': {x: -1, y: 1},
 };
+
+nav.exists = (variable) => {
+    return !(typeof variable === 'undefined' || variable === null);
+}
 
 nav.getRandomCompassDirs = () => { //Get a list of all random compass directions ['W', 'NE', 'S', ...]
     var dirs = nav.dirs.slice();
@@ -170,6 +174,87 @@ nav.goto = (self, loc, destination, fullMap, robotMap) => {
 nav.sqDist = (start, end) => {
     return Math.pow(start.x - end.x, 2) + Math.pow(start.y - end.y, 2);
 };
+
+nav.getDistanceComparator = (me) => {
+    return function(a, b) {
+        let aDist = nav.sqDist(me, a);
+        let bDist = nav.sqDist(me, b);
+        if (aDist < bDist) {
+            return -1;
+        }
+        if (aDist > bDist) {
+            return 1;
+        }
+        return 0;
+    }
+}
+
+//not to be confused with self.getVisibleRobots()
+//this method does not return non-visible units that are broadcasting
+//returns all visible robots meeting the criteria sorted by distance
+nav.getVisibleRobots = (self, team = null, units = null) => {
+    let robots = self.getVisibleRobots();
+    robots = robots.filter(function (robot) {
+        return self.isVisible(robot)
+            && (team === null || robot.team == team)
+            && (units === null || units === robot.unit || units.includes(robot.unit));
+    });
+    if (nav.exists(robots) && robots.length) {
+        return robots.sort(nav.getDistanceComparator(self.me));
+    }
+}
+
+//returns all locations where resourceMap is true that are not in the exclusion list sorted by distance
+nav.getResourceLocations = (self, resourceMap, exclusionList) => {
+    let resources = [];
+    for (let col = 0; col < resourceMap.length; col++) {
+        for (let row = 0; row < resourceMap[col].length; row++) {
+            let excluded = nav.exists(exclusionList) && exclusionList.length && exclusionList.includes(location);
+            if (resourceMap[col][row] && !excluded) {
+                let location = {x: row, y: col};
+                resources.push(location);
+            }
+        }
+    }
+    if (resources.length) {
+        resources.sort(nav.getDistanceComparator(self.me));
+        return resources;
+    }
+}
+
+//returns all karbonite sorted by distance
+nav.getKarboniteLocations = (self, exclusionList) => {
+    let resourceMap = self.getKarboniteMap();
+    //TODO: keep a list of locations of karbonite to exclude, add to this map when you see a worker on a karbonite
+    let resources = nav.getResourceLocations(self, resourceMap, exclusionList);
+    if (nav.exists(resources) && resources.length) {
+        return resources.sort(nav.getDistanceComparator(self.me));
+    }
+}
+
+//returns all fuel sorted by distance
+nav.getFuelLocations = (self, exclusionList) => {
+    let resourceMap = self.getFuelMap();
+    //TODO: keep a list of locations of fuel to exclude, add to this map when you see a worker on a fuel
+    let resources = nav.getResourceLocations(self, resourceMap, exclusionList);
+    if (nav.exists(resources) && resources.length) {
+        return resources.sort(nav.getDistanceComparator(self.me));
+    }
+}
+
+nav.findClosestKarbonite = (self, exclusionList) => {
+    let resources = nav.getKarboniteLocations(self, exclusionList);
+    if (nav.exists(resources) && resources.length) {
+        return resources[0];
+    }
+}
+
+nav.findClosestFuel = (self, exclusionList) => {
+    let resources = nav.getFuelLocations(self, exclusionList);
+    if (nav.exists(resources) && resources.length) {
+        return resources[0];
+    }
+}
 
 nav.checkResources = (self, resources) => {
     if (self.karbonite < resources.karbonite) {
