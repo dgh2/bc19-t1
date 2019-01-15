@@ -36,34 +36,36 @@ pilgrim.turn = (self) => {
     
     if (nav.exists(closestBases) && closestBases.length) {
         has_base = true;
-        let closestBase = closestBases[0];
-        let distance = nav.sqDist(self.me, closestBase);
+        let closest = closestBases[0];
+        let distance = nav.sqDist(self.me, closest);
         if (distance < 2**2) {
             at_base = true;
         }
         if (distance <= 4**2) {
             near_base = true;
         }
-        let compassDir = nav.toCompassDir(nav.getDir(self.me, closestBase));
-        self.log("Closest base: " + closestBase.x + "," + closestBase.y + " is " + distance + " to the " + compassDir);
+        let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
+        self.log("Closest base: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
     }
-    if (nav.exists(closestKarbonite)) {
-        let distance = nav.sqDist(self.me, closestKarbonite);
+    if (nav.exists(closestKarbonite) && closestKarbonite.length) {
+        let closest = closestKarbonite[0];
+        let distance = nav.sqDist(self.me, closest);
         closestKarboniteDistance = distance;
         if (distance <= 3**2 && more_fuel) {
             near_wanted_resource = true;
         }
-        let compassDir = nav.toCompassDir(nav.getDir(self.me, closestKarbonite));
+        let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
         self.log("Closest karbonite: " + closestKarbonite.x + "," + closestKarbonite.y + " is " + distance + " to the " + compassDir);
     }
-    if (nav.exists(closestFuel)) {
-        let distance = nav.sqDist(self.me, closestFuel);
+    if (nav.exists(closestFuel) && closestFuel.length) {
+        let closest = closestFuel[0];
+        let distance = nav.sqDist(self.me, closest);
         closestFuelDistance = distance;
         if (distance <= 3**2 && more_karbonite) {
             near_wanted_resource = true;
         }
-        let compassDir = nav.toCompassDir(nav.getDir(self.me, closestFuel));
-        self.log("Closest fuel: " + closestFuel.x + "," + closestFuel.y + " is " + distance + " to the " + compassDir);
+        let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
+        self.log("Closest fuel: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
     }
     
     if (nav.exists(closestBases) && closestBases.length && at_base && (karbonite_full || fuel_full)) {
@@ -83,7 +85,7 @@ pilgrim.turn = (self) => {
             return self.build(SPECS.CHURCH, ...buildDir);
         }
     }
-    if (has_resources && near_base) {
+    if (nav.exists(closestBases) && closestBases.length && has_resources && near_base) {
         dir = nav.getDir(self.me, closestBases[0]);
     } else if (!has_resources && near_wanted_resource) {
         //todo: teleport
