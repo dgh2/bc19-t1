@@ -8,13 +8,17 @@ castle.turn = (self) => {
     self.log("Health: " + self.me.health);
     let step = self.step;
     let enemyTeam = (self.team == 0 ? 1 : 0);
-    let closestKarbonite = nav.findClosestKarbonite(self);
     let closestFuel = nav.findClosestFuel(self);
+    let closestKarbonite = nav.findClosestKarbonite(self);
     if (nav.exists(closestKarbonite)) {
-        self.log("closest karbonite: " + closestKarbonite.x + "," + closestKarbonite.y);
+        let distance = nav.sqDist(self.me, closestKarbonite);
+        let compassDir = nav.toCompassDir(nav.getDir(self.me, closestKarbonite));
+        self.log("closest karbonite: " + closestKarbonite.x + "," + closestKarbonite.y + " is " + distance + " to the " + compassDir);
     }
     if (nav.exists(closestFuel)) {
-        self.log("closest fuel: " + closestFuel.x + "," + closestFuel.y);
+        let distance = nav.sqDist(self.me, closestFuel);
+        let compassDir = nav.toCompassDir(nav.getDir(self.me, closestFuel));
+        self.log("closest fuel: " + closestFuel.x + "," + closestFuel.y + " is " + distance + " to the " + compassDir);
     }
     //self.log("closest my pilgrim: " + nav.findClosestRobots(self, self.team, [SPECS.PILGRIM]));
     //self.log("closest enemy: " + nav.findClosestRobots(self, enemyTeam));
