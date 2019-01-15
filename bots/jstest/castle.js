@@ -7,9 +7,10 @@ var dir = null;
 castle.turn = (self) => {
     self.log("Health: " + self.me.health);
     let step = self.step;
+    self.log("step: " + step);
     let enemyTeam = (self.team == 0 ? 1 : 0);
-    let closestFuel = nav.findClosestFuel(self);
     let closestKarbonite = nav.findClosestKarbonite(self);
+    let closestFuel = nav.findClosestFuel(self);
     if (nav.exists(closestKarbonite)) {
         let distance = nav.sqDist(self.me, closestKarbonite);
         let compassDir = nav.toCompassDir(nav.getDir(self.me, closestKarbonite));
@@ -20,7 +21,6 @@ castle.turn = (self) => {
         let compassDir = nav.toCompassDir(nav.getDir(self.me, closestFuel));
         self.log("Closest fuel: " + closestFuel.x + "," + closestFuel.y + " is " + distance + " to the " + compassDir);
     }
-    self.log("step: " + step);
     dir = nav.randomValidDir(self);
     if (dir === null) {
         self.log("No valid directions");

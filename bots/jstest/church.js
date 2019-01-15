@@ -5,7 +5,7 @@ const church = {};
 var dir = null;
 
 church.turn = (self) => {
-    self.log("Health: " + self.me.health);
+    //self.log("Health: " + self.me.health);
     let step = self.step;
     dir = nav.randomValidDir(self);
     if (dir === null) {

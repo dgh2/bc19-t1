@@ -259,10 +259,40 @@ nav.findClosestKarbonite = (self, exclusionList) => {
     }
 }
 
+nav.findClosestPassableKarbonite = (self, exclusionList) => {
+    let closestList = [];
+    let resources = nav.getKarboniteLocations(self, exclusionList);
+    if (nav.exists(resources) && resources.length) {
+        for (let i = 0; i < resources.length; i++) {
+            if (nav.isPassable(self, resources[i])) {
+                closestList.push(resources[i]); 
+            }
+        }
+    }
+    if (closestList.length) {
+        return closestList;
+    }
+}
+
 nav.findClosestFuel = (self, exclusionList) => {
     let resources = nav.getFuelLocations(self, exclusionList);
     if (nav.exists(resources) && resources.length) {
         return resources[0];
+    }
+}
+
+nav.findClosestPassableFuel = (self, exclusionList) => {
+    let closestList = [];
+    let resources = nav.getFuelLocations(self, exclusionList);
+    if (nav.exists(resources) && resources.length) {
+        for (let i = 0; i < resources.length; i++) {
+            if (nav.isPassable(self, resources[i])) {
+                closestList.push(resources[i]); 
+            }
+        }
+    }
+    if (closestList.length) {
+        return closestList;
     }
 }
 

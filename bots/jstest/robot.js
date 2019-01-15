@@ -16,6 +16,7 @@ class MyRobot extends BCAbstractRobot {
         this.step = -1; //add step to self
         this.oldLog = this.log; //backup original self.log at self.oldLog
         this.log = this.newLog; //replace self.log calls with self.newLog calls
+        this.specs = null;
     }
     
     newLog(message) {
@@ -59,6 +60,7 @@ class MyRobot extends BCAbstractRobot {
                         throw new TypeError("Invalid unit type: " + r.unit);
                     }
             }
+            this.specs = SPECS['UNITS'][this.me.unit];
         }
         this.step++;
         return this.slave.turn(this);
