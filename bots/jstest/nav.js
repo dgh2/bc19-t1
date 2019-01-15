@@ -313,7 +313,7 @@ nav.canBuild = (self, type, direction) => {
   if (!nav.checkResources(self, {karbonite: required_karbonite , fuel: required_fuel} )) {
     return false;
   }
-  if (direction) { //would only skip if falsy
+  if (nav.exists(direction)) {
     if (!nav.isPassable(self, nav.applyDir(self.me, direction))) {
       return false;
     }

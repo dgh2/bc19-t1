@@ -26,28 +26,35 @@ castle.turn = (self) => {
         self.log("No valid directions");
         return;
     }
+    let oldDir = dir;
     var loc = {x: self.me.x + dir.x, y: self.me.y + dir.y};
     if (step <= 1000) { //(step % 10 === 0)
-        dir = nav.randomValidDir(self);
-        if (nav.canBuild(self,SPECS.PILGRIM,dir)) {
+        if (nav.canBuild(self,SPECS.PILGRIM,oldDir)) {
+          dir = nav.randomValidDir(self);
           self.log("Building a pilgrim at " + loc.x + "," + loc.y);
-          return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
+          return self.buildUnit(SPECS.PILGRIM, oldDir.x, oldDir.y);
         } 
         else {
           self.log("Can't Build here, it's BAT COUNTRY!");
         }
     } else if (step % 12 === 0) {
+      if (nav.canBuild(self,SPECS.CRUSADER,oldDir)) {
         dir = nav.randomValidDir(self);
         self.log("Building a crusader at " + loc.x + "," + loc.y);
-        return self.buildUnit(SPECS.CRUSADER, dir.x, dir.y);
+        return self.buildUnit(SPECS.CRUSADER, oldDir.x, oldDir.y);
+      }
     } else if (step % 15 === 0) {
+      if (nav.canBuild(self,SPECS.PROPHET,oldDir)) {
         dir = nav.randomValidDir(self);
         self.log("Building a prophet at " + loc.x + "," + loc.y);
-        return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
+        return self.buildUnit(SPECS.PROPHET, oldDir.x, oldDir.y);
+      }
     } else if (step % 19 === 0) {
+      if (nav.canBuild(self,SPECS.PREACHER,oldDir)) {
         dir = nav.randomValidDir(self);
         self.log("Building a preacher at " + loc.x + "," + loc.y);
-        return self.buildUnit(SPECS.PREACHER, dir.x, dir.y);
+        return self.buildUnit(SPECS.PREACHER, oldDir.x, oldDir.y);
+      }
     }
 }
 

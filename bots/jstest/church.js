@@ -12,15 +12,16 @@ church.turn = (self) => {
         self.log("No valid directions");
         return;
     }
-    var loc = {x: self.me.x + dir.x, y: self.me.y + dir.y};
+    let oldDir = dir;
+    let loc = {x: self.me.x + dir.x, y: self.me.y + dir.y};
     if (step % 10 === 0) {
         dir = nav.randomValidDir(self);
         self.log("Building a pilgrim at " + loc.x + "," + loc.y);
-        return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
+        return self.buildUnit(SPECS.PILGRIM, oldDir.x, oldDir.y);
     } else if (step % 12 === 0) {
         dir = nav.randomValidDir(self);
         self.log("Building a crusader at " + loc.x + "," + loc.y);
-        return self.buildUnit(SPECS.CRUSADER, dir.x, dir.y);
+        return self.buildUnit(SPECS.CRUSADER, oldDir.x, oldDir.y);
     } else if (step % 15 === 0) {
         dir = nav.randomValidDir(self);
         self.log("Building a prophet at " + loc.x + "," + loc.y);
