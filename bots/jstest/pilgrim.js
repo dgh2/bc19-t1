@@ -91,7 +91,7 @@ pilgrim.turn = (self) => {
     if (on_wanted_resource && !near_base) {
         let buildDir = nav.randomValidDir(self);
         if (nav.exists(buildDir)) {
-            self.log("Building church to the " + nav.toCompassDir(nav.getDir(buildDir)));
+            self.log("Building church to the " + nav.toCompassDir(nav.getDir(self.me, buildDir)));
             return self.buildUnit(SPECS.CHURCH, buildDir.x, buildDir.y);
         }
     }
