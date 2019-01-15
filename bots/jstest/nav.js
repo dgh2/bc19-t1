@@ -202,9 +202,10 @@ nav.getVisibleRobots = (self, team, units) => {
     for (let i = 0; i < visibleRobots.length; i++) {
         let robot = visibleRobots[i];
         if (self.isVisible(robot)
-            && (!nav.exists(units) || (Array.isArray(units) && units.includes(robot.unit)) || units === robot.unit)
-            && (!nav.exists(units) || (!Array.isArray(units) && units === robot.unit))
-            && (!nav.exists(team) || robot.team === team)) {
+            && (!nav.exists(team) || robot.team === team)
+            && (!nav.exists(units) || 
+                (Array.isArray(units) && units.includes(robot.unit)
+                || (!Array.isArray(units) && units === robot.unit)))) {
             robots.push(robot);
         }
     }

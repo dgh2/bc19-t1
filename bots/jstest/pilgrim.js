@@ -7,7 +7,7 @@ var dir = null;
 pilgrim.turn = (self) => {
     self.log("Health: " + self.me.health);
     let enemyTeam = (self.team == 0 ? 1 : 0);
-    let closestBases = nav.getVisibleRobots(self, self.team, SPECS.CASTLE);
+    let closestBases = nav.getVisibleRobots(self, self.team, [SPECS.CASTLE]);
     if (nav.exists(closestBases) && closestBases.length) {
         let closestBase = closestBases[0];
         let distance = nav.sqDist(self.me, closestBase);
