@@ -148,7 +148,7 @@ nav.isPassable = (self, loc) => { //{x:self.x , y:self.y} passed in as the varia
     }
     return true;
 };
-
+//loc = {x: , y: }  dir {x: , y: }
 nav.applyDir = (loc, dir) => {
     return {
         x: loc.x + dir.x,
@@ -276,7 +276,7 @@ nav.canBuild = (self, type, direction) => {
   if (direction) { //would only skip if falsy
     let ehx = self.me.x + direction.x;
     let whyy = self.me.y + direction.y;
-    let target = { x: ehx , y: whyy }; // as {x: , y: }
+    let target = nav.apply(self.me, direction); // as {x: , y: }
     if (!nav.isPassable(self, target)) {
       return false;
     }
