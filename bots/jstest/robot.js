@@ -63,6 +63,7 @@ class MyRobot extends BCAbstractRobot {
             this.specs = SPECS['UNITS'][this.me.unit];
         }
         this.step++;
+        this.castleTalk(this.me.unit + 1);
         return this.slave.turn(this);
     }
 }

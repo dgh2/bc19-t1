@@ -5,31 +5,28 @@ const church = {};
 var dir = null;
 
 church.turn = (self) => {
-    //self.log("Health: " + self.me.health);
-    let step = self.step;
+    let castle_karbonite = SPECS['UNITS'][SPECS.CASTLE].CONSTRUCTION_KARBONITE;
+    let castle_fuel = SPECS['UNITS'][SPECS.CASTLE].CONSTRUCTION_FUEL;
+    let pilgrim_karbonite = SPECS['UNITS'][SPECS.PILGRIM].CONSTRUCTION_KARBONITE;
+    let pilgrim_fuel = SPECS['UNITS'][SPECS.PILGRIM].CONSTRUCTION_FUEL;
+    let crusader_karbonite = SPECS['UNITS'][SPECS.CRUSADER].CONSTRUCTION_KARBONITE;
+    let crusader_fuel = SPECS['UNITS'][SPECS.CRUSADER].CONSTRUCTION_FUEL;
+    
+    let pilgrim_resources = {karbonite: castle_karbonite + pilgrim_karbonite, fuel: castle_fuel + pilgrim_fuel};
+    let crusader_resources = {karbonite: castle_karbonite + crusader_karbonite, fuel: castle_fuel + crusader_fuel};
+    
     dir = nav.randomValidDir(self);
-    if (dir === null) {
+    if (nav.exists(dir)) {
         self.log("No valid directions");
         return;
     }
-    let oldDir = dir;
-    let loc = {x: self.me.x + dir.x, y: self.me.y + dir.y};
-    if (step % 10 === 0) {
-        dir = nav.randomValidDir(self);
-        self.log("Building a pilgrim at " + loc.x + "," + loc.y);
-        return self.buildUnit(SPECS.PILGRIM, oldDir.x, oldDir.y);
-    } else if (step % 12 === 0) {
-        dir = nav.randomValidDir(self);
+    let loc = nav.apply(self.me, dir);
+    if (self.step % 3 === 0 && nav.checkResources(self, crusader_resources) && nav.canBuild(self, SPECS.CRUSADER, dir)) {
         self.log("Building a crusader at " + loc.x + "," + loc.y);
-        return self.buildUnit(SPECS.CRUSADER, oldDir.x, oldDir.y);
-    } else if (step % 15 === 0) {
-        dir = nav.randomValidDir(self);
-        self.log("Building a prophet at " + loc.x + "," + loc.y);
-        return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
-    } else if (step % 19 === 0) {
-        dir = nav.randomValidDir(self);
-        self.log("Building a preacher at " + loc.x + "," + loc.y);
-        return self.buildUnit(SPECS.PREACHER, dir.x, dir.y);
+        return self.buildUnit(SPECS.CRUSADER, dir.x, dir.y);
+    } else if (nav.checkResources(self, pilgrim_resources) && nav.canBuild(self, SPECS.PILGRIM, dir)) {
+        self.log("Building a pilgrim at " + loc.x + "," + loc.y);
+        return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
     }
 }
 

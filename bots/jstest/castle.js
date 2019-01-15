@@ -5,56 +5,44 @@ const castle = {};
 var dir = null;
 
 castle.turn = (self) => {
-    //self.log("Health: " + self.me.health);
-    let step = self.step;
-    //self.log("step: " + step);
-    let enemyTeam = (self.team == 0 ? 1 : 0);
-    let closestKarbonite = nav.findClosestKarbonite(self);
-    let closestFuel = nav.findClosestFuel(self);
-    if (nav.exists(closestKarbonite)) {
-        let distance = nav.sqDist(self.me, closestKarbonite);
-        let compassDir = nav.toCompassDir(nav.getDir(self.me, closestKarbonite));
-        //self.log("Closest karbonite: " + closestKarbonite.x + "," + closestKarbonite.y + " is " + distance + " to the " + compassDir);
+    let castle_karbonite = SPECS['UNITS'][SPECS.CASTLE].CONSTRUCTION_KARBONITE;
+    let castle_fuel = SPECS['UNITS'][SPECS.CASTLE].CONSTRUCTION_FUEL;
+    let pilgrim_karbonite = SPECS['UNITS'][SPECS.PILGRIM].CONSTRUCTION_KARBONITE;
+    let pilgrim_fuel = SPECS['UNITS'][SPECS.PILGRIM].CONSTRUCTION_FUEL;
+    let prophet_karbonite = SPECS['UNITS'][SPECS.PROPHET].CONSTRUCTION_KARBONITE;
+    let prophet_fuel = SPECS['UNITS'][SPECS.PROPHET].CONSTRUCTION_FUEL;
+    let unitCounts = [];
+    let visibleRobots = self.getVisibleRobots();
+    for (let i = 0; i < visibleRobots.length; i++) {
+        if (!self.isVisible(visibleRobots[i]) || self.team === visibleRobots[i].team) {
+            let unit = visibleRobots[i].castle_talk - 1;
+            if (nav.exists(unitCounts[unit]) {
+                unitCounts[unit] = unitCounts[unit] + 1;
+            } else {
+                unitCounts[unit] = 1;
+            }
+            if (self.step == 0) {
+                unitCounts[self.me.unit] = unitCounts[self.me.unit] + 1;
+            }
+        }
     }
-    if (nav.exists(closestFuel)) {
-        let distance = nav.sqDist(self.me, closestFuel);
-        let compassDir = nav.toCompassDir(nav.getDir(self.me, closestFuel));
-        //self.log("Closest fuel: " + closestFuel.x + "," + closestFuel.y + " is " + distance + " to the " + compassDir);
-    }
+    
     dir = nav.randomValidDir(self);
-    if (dir === null) {
+    if (nav.exists(dir)) {
         self.log("No valid directions");
         return;
     }
-    let oldDir = dir;
-    var loc = {x: self.me.x + dir.x, y: self.me.y + dir.y};
-    if (step <= 10 || step % 10 === 0) { //(step % 10 === 0)
-        if (nav.canBuild(self,SPECS.PILGRIM,oldDir)) {
-          dir = nav.randomValidDir(self);
-          self.log("Building a pilgrim at " + loc.x + "," + loc.y);
-          return self.buildUnit(SPECS.PILGRIM, oldDir.x, oldDir.y);
-        } 
-        else {
-          self.log("Can't Build here, it's BAT COUNTRY!");
-        }
-    } else if (step % 12 === 0) {
-      if (nav.canBuild(self,SPECS.CRUSADER,oldDir)) {
-        dir = nav.randomValidDir(self);
-        self.log("Building a crusader at " + loc.x + "," + loc.y);
-        return self.buildUnit(SPECS.CRUSADER, oldDir.x, oldDir.y);
-      }
-    } else if (step % 15 === 0) {
-      if (nav.canBuild(self,SPECS.PROPHET,oldDir)) {
-        dir = nav.randomValidDir(self);
+    
+    let prophet_resources = {karbonite: castle_karbonite + prophet_karbonite, fuel: castle_fuel + prophet_fuel};
+    let pilgrim_resources = {karbonite: castle_karbonite + pilgrim_karbonite, fuel: castle_fuel + pilgrim_fuel};
+    
+    let loc = nav.apply(self.me, dir);
+    if (unitCounts[SPECS.CHURCH] && nav.checkResources(self, prophet_resources) && nav.canBuild(self, SPECS.PROPHET, dir)) {
         self.log("Building a prophet at " + loc.x + "," + loc.y);
-        return self.buildUnit(SPECS.PROPHET, oldDir.x, oldDir.y);
-      }
-    } else if (step % 19 === 0) {
-      if (nav.canBuild(self,SPECS.PREACHER,oldDir)) {
-        dir = nav.randomValidDir(self);
-        self.log("Building a preacher at " + loc.x + "," + loc.y);
-        return self.buildUnit(SPECS.PREACHER, oldDir.x, oldDir.y);
-      }
+        return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
+    } else if (nav.checkResources(self, pilgrim_resources) && nav.canBuild(self, SPECS.PILGRIM, dir)) {
+        self.log("Building a pilgrim at " + loc.x + "," + loc.y);
+        return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
     }
 }
 
