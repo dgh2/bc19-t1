@@ -5,21 +5,21 @@ const castle = {};
 var dir = null;
 
 castle.turn = (self) => {
-    self.log("Health: " + self.me.health);
+    //self.log("Health: " + self.me.health);
     let step = self.step;
-    self.log("step: " + step);
+    //self.log("step: " + step);
     let enemyTeam = (self.team == 0 ? 1 : 0);
     let closestKarbonite = nav.findClosestKarbonite(self);
     let closestFuel = nav.findClosestFuel(self);
     if (nav.exists(closestKarbonite)) {
         let distance = nav.sqDist(self.me, closestKarbonite);
         let compassDir = nav.toCompassDir(nav.getDir(self.me, closestKarbonite));
-        self.log("Closest karbonite: " + closestKarbonite.x + "," + closestKarbonite.y + " is " + distance + " to the " + compassDir);
+        //self.log("Closest karbonite: " + closestKarbonite.x + "," + closestKarbonite.y + " is " + distance + " to the " + compassDir);
     }
     if (nav.exists(closestFuel)) {
         let distance = nav.sqDist(self.me, closestFuel);
         let compassDir = nav.toCompassDir(nav.getDir(self.me, closestFuel));
-        self.log("Closest fuel: " + closestFuel.x + "," + closestFuel.y + " is " + distance + " to the " + compassDir);
+        //self.log("Closest fuel: " + closestFuel.x + "," + closestFuel.y + " is " + distance + " to the " + compassDir);
     }
     dir = nav.randomValidDir(self);
     if (dir === null) {

@@ -45,7 +45,7 @@ pilgrim.turn = (self) => {
             near_base = true;
         }
         let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
-        self.log("Closest base: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
+        //self.log("Closest base: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
     }
     if (nav.exists(closestKarbonite) && closestKarbonite.length) {
         let closest = closestKarbonite[0];
@@ -55,7 +55,7 @@ pilgrim.turn = (self) => {
             near_wanted_resource = true;
         }
         let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
-        self.log("Closest karbonite: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
+        //self.log("Closest karbonite: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
     }
     if (nav.exists(closestFuel) && closestFuel.length) {
         let closest = closestFuel[0];
@@ -65,7 +65,7 @@ pilgrim.turn = (self) => {
             near_wanted_resource = true;
         }
         let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
-        self.log("Closest fuel: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
+        //self.log("Closest fuel: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
     }
     
     if (nav.exists(closestBases) && closestBases.length && at_base && (karbonite_full || fuel_full)) {
@@ -77,15 +77,21 @@ pilgrim.turn = (self) => {
         return self.give(baseDir.x, baseDir.y, self.me.karbonite, self.me.fuel);
     }
     if (on_fuel && !fuel_full) {
-        self.log("Mining karbonite and " + self.me.fuel + " fuel to base to the " + nav.toCompassDir(baseDir));
+        if (self.me.fuel == 0) {
+            self.log("Mining fuel");
+        }
         return self.mine();
     }
     if (on_karbonite && !karbonite_full) {
+        if (self.me.karbonite == 0) {
+            self.log("Mining karbonite");
+        }
         return self.mine();
     }
     if (on_wanted_resource && !near_base) {
         let buildDir = nav.randomValidDir(self);
         if (nav.exists(buildDir)) {
+            self.log("Building church to the " + nav.toCompassDir(nav.getDir(buildDir)));
             return self.buildUnit(SPECS.CHURCH, buildDir.x, buildDir.y);
         }
     }
@@ -93,34 +99,34 @@ pilgrim.turn = (self) => {
     let oldDir = dir;
     if (nav.exists(closestBases) && closestBases.length && has_resources && near_base) {
         dir = nav.getDir(self.me, closestBases[0]);
-        if (dir != oldDir) {
+        if (nav.exists(dir) && dir != oldDir) {
             self.log("Targeting base to the " + nav.toCompassDir(dir));
         }
     } else if (!has_resources && near_wanted_resource) {
         //todo: teleport
        if (more_karbonite && nav.exists(closestFuel) && closestFuel.length) {
             dir = nav.getDir(self.me, closestFuel[0]);
-            if (dir != oldDir) {
+            if (nav.exists(dir) && dir != oldDir) {
                 self.log("More fuel. Targeting nearby fuel to the " + nav.toCompassDir(dir));
             }
         } else if (nav.exists(closestKarbonite) && closestKarbonite.length) {
             dir = nav.getDir(self.me, closestKarbonite[0]);
-            if (dir != oldDir) {
+            if (nav.exists(dir) && dir != oldDir) {
                 self.log("More karbonite. Targeting nearby karbonite to the " + nav.toCompassDir(dir));
             }
         }
     } else if (more_karbonite && nav.exists(closestFuel) && closestFuel.length) {
         dir = nav.getDir(self.me, closestFuel[0]);
-        if (dir != oldDir) {
-            self.log("More fuel. Targeting fuel to the " + nav.toCompassDir(dir));
+        if (nav.exists(dir) && dir != oldDir) {
+            self.log("More karbonite. Targeting fuel to the " + nav.toCompassDir(dir));
         }
     } else if (nav.exists(closestKarbonite) && closestKarbonite.length) {
         dir = nav.getDir(self.me, closestKarbonite[0]);
-        if (dir != oldDir) {
-            self.log("More karbonite. Targeting karbonite to the " + nav.toCompassDir(dir));
+        if (nav.exists(dir) && dir != oldDir) {
+            self.log("More fuel. Targeting karbonite to the " + nav.toCompassDir(dir));
         }
     }
-    if (!nav.exists(dir) || !nav.isPassable(self, nav.applyDir(self.me, dir))) {
+    if (nav.exists(dir) && !nav.isPassable(self, nav.applyDir(self.me, dir))) {
         dir = null;
         if (dir != oldDir) {
             self.log("Not passable. Clearing direction.");
@@ -128,7 +134,7 @@ pilgrim.turn = (self) => {
     }
     if (!nav.exists(dir)) {
         dir = nav.randomValidDir(self);
-        if (dir != oldDir) {
+        if (nav.exists(dir) && dir != oldDir) {
             self.log("Picking random direction: " + nav.toCompassDir(dir));
         }
     }
