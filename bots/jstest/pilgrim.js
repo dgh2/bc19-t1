@@ -94,11 +94,15 @@ pilgrim.turn = (self) => {
         }
         return self.mine();
     }
-    if (on_wanted_resource && !near_base && nav.checkResources(church_resources)) {
-        let buildDir = nav.randomValidDir(self);
-        if (nav.exists(buildDir)) {
-            self.log("Building church to the " + nav.toCompassDir(nav.getDir(self.me, buildDir)));
-            return self.buildUnit(SPECS.CHURCH, buildDir.x, buildDir.y);
+    if (!near_base && nav.checkResources(self, church_resources)) {
+        let lacking_karconite = !nav.checkResources(self, 2*church_karbonite, 0);
+        let lacking_fuel = !nav.checkResources(self, 0, 2*church_fuel);
+        if (on_wanted_resource || (on_fuel && lacking_fuel) || (on_karbonite && lacking_karbonite)) {
+            let buildDir = nav.randomValidDir(self);
+            if (nav.exists(buildDir)) {
+                self.log("Building church to the " + nav.toCompassDir(nav.getDir(self.me, buildDir)));
+                return self.buildUnit(SPECS.CHURCH, buildDir.x, buildDir.y);
+            }
         }
     }
     

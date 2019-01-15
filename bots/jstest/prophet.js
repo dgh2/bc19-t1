@@ -4,6 +4,7 @@ import nav from './nav.js';
 const prophet = {};
 
 prophet.turn = (self) => {
+    let enemyTeam = (self.team == 0 ? 1 : 0);
     let closestEnemies = nav.getVisibleRobots(self, enemyTeam);
     let closestEnemyAttacker = nav.getVisibleRobots(self, enemyTeam, [SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
     let closestEnemyPilgrims = nav.getVisibleRobots(self, enemyTeam, SPECS.PILGRIM);
@@ -17,7 +18,8 @@ prophet.turn = (self) => {
         self.log("closestEnemyAttacker: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
         if (distance <= self.specs.ATTACK_RADIUS) {
             self.log("Attacking closestEnemyAttacker: " + closest.x + "," + closest.y);
-            return self.attack(closest.x, closest.y);
+            let attack_offset = {x: closest.x - self.me.x, y: closest.y - self.me.y};
+            return self.attack(attack_offset.x, attack_offset.y);
         }
     }
 }
