@@ -5,7 +5,10 @@ const pilgrim = {};
 var dir;
 
 pilgrim.turn = (self) => {
-    //self.log("Health: " + self.me.health);
+    let church_karbonite = SPECS['UNITS'][SPECS.CHURCH].CONSTRUCTION_KARBONITE;
+    let church_fuel = SPECS['UNITS'][SPECS.CHURCH].CONSTRUCTION_FUEL;
+    let church_resources = {karbonite: church_karbonite, fuel: church_fuel};
+
     let step = self.step;
     let enemyTeam = (self.team == 0 ? 1 : 0);
     let closestBases = nav.getVisibleRobots(self, self.team, [SPECS.CASTLE, SPECS.CHURCH]);
@@ -91,7 +94,7 @@ pilgrim.turn = (self) => {
         }
         return self.mine();
     }
-    if (on_wanted_resource && !near_base) {
+    if (on_wanted_resource && !near_base && nav.checkResources(church_resources)) {
         let buildDir = nav.randomValidDir(self);
         if (nav.exists(buildDir)) {
             self.log("Building church to the " + nav.toCompassDir(nav.getDir(self.me, buildDir)));

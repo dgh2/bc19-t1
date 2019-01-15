@@ -20,7 +20,7 @@ church.turn = (self) => {
         self.log("No valid directions");
         return;
     }
-    let loc = nav.apply(self.me, dir);
+    let loc = nav.applyDir(self.me, dir);
     if (self.step % 3 === 0 && nav.checkResources(self, crusader_resources) && nav.canBuild(self, SPECS.CRUSADER, dir)) {
         self.log("Building a crusader at " + loc.x + "," + loc.y);
         return self.buildUnit(SPECS.CRUSADER, dir.x, dir.y);
