@@ -82,7 +82,7 @@ pilgrim.turn = (self) => {
         let buildDir = nav.randomValidDir(self);
         if (nav.exists(buildDir)) {
             dir = null;
-            return self.build_unit(SPECS.CHURCH, ...buildDir);
+            return self.buildUnit(SPECS.CHURCH, buildDir.x, buildDir.y);
         }
     }
     if (nav.exists(closestBases) && closestBases.length && has_resources && near_base) {
@@ -104,7 +104,7 @@ pilgrim.turn = (self) => {
         dir = nav.getDir(self.me, closestKarbonite[0]);
         self.log("More karbonite. Targeting karbonite to the " + nav.toCompassDir(dir));
     }
-    if (nav.exists(dir) && !nav.isPassable(self, nav.applyDir(self.me, dir))) {
+    if (!nav.exists(dir) || !nav.isPassable(self, nav.applyDir(self.me, dir))) {
         dir = null;
     }
     if (!nav.exists(dir)) {
