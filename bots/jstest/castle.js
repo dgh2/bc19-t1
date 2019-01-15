@@ -13,15 +13,13 @@ castle.turn = (self) => {
     if (nav.exists(closestKarbonite)) {
         let distance = nav.sqDist(self.me, closestKarbonite);
         let compassDir = nav.toCompassDir(nav.getDir(self.me, closestKarbonite));
-        self.log("closest karbonite: " + closestKarbonite.x + "," + closestKarbonite.y + " is " + distance + " to the " + compassDir);
+        self.log("Closest karbonite: " + closestKarbonite.x + "," + closestKarbonite.y + " is " + distance + " to the " + compassDir);
     }
     if (nav.exists(closestFuel)) {
         let distance = nav.sqDist(self.me, closestFuel);
         let compassDir = nav.toCompassDir(nav.getDir(self.me, closestFuel));
-        self.log("closest fuel: " + closestFuel.x + "," + closestFuel.y + " is " + distance + " to the " + compassDir);
+        self.log("Closest fuel: " + closestFuel.x + "," + closestFuel.y + " is " + distance + " to the " + compassDir);
     }
-    //self.log("closest my pilgrim: " + nav.findClosestRobots(self, self.team, [SPECS.PILGRIM]));
-    //self.log("closest enemy: " + nav.findClosestRobots(self, enemyTeam));
     self.log("step: " + step);
     dir = nav.randomValidDir(self);
     if (dir === null) {

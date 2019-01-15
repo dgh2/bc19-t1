@@ -51,11 +51,15 @@ nav.getRandomCompassDirs = () => { //Get a list of all random compass directions
 };
 
 nav.toCompassDir = (coordinateDir) => { //convert coordinate dir like {x: -1, y: -1} into compass dir like 'NW'
-    return nav.compass[coordinateDir.y + 1][coordinateDir.x + 1];
+    if (nav.exists(coordinateDir)) {
+        return nav.compass[coordinateDir.y + 1][coordinateDir.x + 1];
+    }
 };
 
 nav.toDir = (compassDir) => { //convert compass dir like 'NW' into coordinate dir like {x: -1, y: -1}
-    return nav.compassToDir[compassDir];
+    if (nav.exists(compassDir)) {
+        return nav.compassToDir[compassDir];
+    }
 };
 
 nav.getRandomCompassDir = () => { //Get random compass direction like 'N', 'NE', 'E', ...
@@ -148,7 +152,7 @@ nav.isPassable = (self, loc) => { //{x:self.x , y:self.y} passed in as the varia
     }
     return true;
 };
-//loc = {x: , y: }  dir {x: , y: }
+
 nav.applyDir = (loc, dir) => {
     return {
         x: loc.x + dir.x,
@@ -192,13 +196,18 @@ nav.getDistanceComparator = (me) => {
 //not to be confused with self.getVisibleRobots()
 //this method does not return non-visible units that are broadcasting
 //returns all visible robots meeting the criteria sorted by distance
-nav.getVisibleRobots = (self, team = null, units = null) => {
-    let robots = self.getVisibleRobots();
-    robots = robots.filter(function (robot) {
-        return self.isVisible(robot)
-            && (team === null || robot.team == team)
-            && (units === null || units === robot.unit || units.includes(robot.unit));
-    });
+nav.getVisibleRobots = (self, team, units) => {
+    let robots = [];
+    let visibleRobots = self.getVisibleRobots();
+    for (let i = 0; i < visibleRobots.length; i++) {
+        let robot = visibleRobots[i];
+        if (self.isVisible(robot)
+            && (!nav.exists(units) || (Array.isArray(units) && units.includes(robot.unit)) || units === robot.unit)
+            && (!nav.exists(units) || (!Array.isArray(units) && units === robot.unit))
+            && (!nav.exists(team) || robot.team === team)) {
+            robots.push(robot);
+        }
+    }
     if (nav.exists(robots) && robots.length) {
         return robots.sort(nav.getDistanceComparator(self.me));
     }
@@ -274,10 +283,7 @@ nav.canBuild = (self, type, direction) => {
     return false;
   }
   if (direction) { //would only skip if falsy
-    let ehx = self.me.x + direction.x;
-    let whyy = self.me.y + direction.y;
-    let target = nav.apply(self.me, direction); // as {x: , y: }
-    if (!nav.isPassable(self, target)) {
+    if (!nav.isPassable(self, nav.applyDir(self.me, direction))) {
       return false;
     }
   }

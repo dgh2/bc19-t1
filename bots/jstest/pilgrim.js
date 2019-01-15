@@ -6,6 +6,14 @@ var dir = null;
 
 pilgrim.turn = (self) => {
     self.log("Health: " + self.me.health);
+    let enemyTeam = (self.team == 0 ? 1 : 0);
+    let closestBases = nav.getVisibleRobots(self, self.team, SPECS.CASTLE);
+    if (nav.exists(closestBases) && closestBases.length) {
+        let closestBase = closestBases[0];
+        let distance = nav.sqDist(self.me, closestBase);
+        let compassDir = nav.toCompassDir(nav.getDir(self.me, closestBase));
+        self.log("Closest base: " + closestBase.x + "," + closestBase.y + " is " + distance + " to the " + compassDir);
+    }
     let step = self.step;
     if (dir === null || !nav.isPassable(self, nav.applyDir(self.me, dir))) {
         dir = nav.randomValidDir(self);
