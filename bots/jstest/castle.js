@@ -7,6 +7,11 @@ var dir = null;
 castle.turn = (self) => {
     self.log("Health: " + self.me.health);
     let step = self.step;
+    let enemyTeam = (self.team == 0 ? 1 : 0);
+    self.log("closest karbonite: " + nav.findClosestKarbonite(self));
+    self.log("closest fuel: " + nav.findClosestFuel(self));
+    //self.log("closest my pilgrim: " + nav.findClosestRobots(self, self.team, [SPECS.PILGRIM]));
+    //self.log("closest enemy: " + nav.findClosestRobots(self, enemyTeam));
     self.log("step: " + step);
     dir = nav.randomValidDir(self);
     if (dir === null) {
