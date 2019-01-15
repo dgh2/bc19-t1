@@ -30,6 +30,9 @@ castle.turn = (self) => {
         if (nav.canBuild(self,SPECS.PILGRIM,dir)) {
           self.log("Building a pilgrim at " + loc.x + "," + loc.y);
           return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
+        } 
+        else {
+          self.log("Can't Build here, it's BAT COUNTRY!");
         }
     } else if (step % 12 === 0) {
         dir = nav.randomValidDir(self);
