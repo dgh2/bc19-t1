@@ -1,3 +1,4 @@
+import {SPECS} from 'battlecode';
 const nav = {};
 
 nav.compass = [
@@ -125,7 +126,7 @@ nav.getDir = (start, target) => {
     return newDir;
 };
 
-nav.isPassable = (self, loc) => {
+nav.isPassable = (self, loc) => { //{x:self.x , y:self.y} passed in as the variable loc
     const {x, y} = loc;
     const passableMap = self.getPassableMap();
     const robotMap = self.getVisibleRobotMap();
@@ -170,7 +171,7 @@ nav.sqDist = (start, end) => {
     return Math.pow(start.x - end.x, 2) + Math.pow(start.y - end.y, 2);
 };
 
-nav.check_resources = (self, resources) => {
+nav.checkResources = (self, resources) => {
     if (self.karbonite < resources.karbonite) {
         return false; //not enough karbonite
     }
@@ -178,6 +179,23 @@ nav.check_resources = (self, resources) => {
         return false; //not enough fuel
     }
     return true;
+}
+
+//takes compass direction
+nav.canBuild = (self, type, direction) => {
+  required_karbonite = SPECS['UNITS'][SPECS[type.upper()]].CONSTRUCTION_KARBONITE;
+  required_fuel = SPECS['UNITS'][SPECS[type.upper()]].CONSTRUCTION_FUEL;
+  if (nav.checkResources(self, {karbonite: required_karbonite , fuel: required_fuel} ) === false) {
+    return false;
+  }
+  if (direction) { //would only skip if falsy
+    offset = nav.toDir(direction); //coordinate dir like {x: -1, y: -1}
+    target = { x: self.x + offset.x , y: self.y + offset.y }; // as {x: , y: }
+    if (nav.isPassable(self, target) === false) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export default nav;
