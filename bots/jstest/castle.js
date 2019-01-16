@@ -32,7 +32,7 @@ castle.turn = (self) => {
         }
     }
     if (self.step === 1) {
-        //self.log("Castle count: " + unitCounts[SPECS.CASTLE]);
+        self.log("Castle count: " + unitCounts[SPECS.CASTLE]);
     }
     
     dir = nav.randomValidDir(self);
@@ -46,10 +46,10 @@ castle.turn = (self) => {
     
     let loc = nav.applyDir(self.me, dir);
     if (unitCounts[SPECS.CHURCH] && nav.checkResources(self, prophet_resources) && nav.canBuild(self, SPECS.PROPHET, dir)) {
-        //self.log("Building a prophet at " + loc.x + "," + loc.y);
+        self.log("Building a prophet at " + loc.x + "," + loc.y);
         return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
     } else if (nav.checkResources(self, pilgrim_resources) && nav.canBuild(self, SPECS.PILGRIM, dir)) {
-        //self.log("Building a pilgrim at " + loc.x + "," + loc.y);
+        self.log("Building a pilgrim at " + loc.x + "," + loc.y);
         return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
     }
 }
