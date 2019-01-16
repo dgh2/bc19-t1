@@ -17,15 +17,15 @@ church.turn = (self) => {
     
     dir = nav.randomValidDir(self);
     if (!nav.exists(dir)) {
-        self.log("No valid directions");
+        //self.log("No valid directions");
         return;
     }
     let loc = nav.applyDir(self.me, dir);
     if (self.step % 3 === 0 && nav.checkResources(self, crusader_resources) && nav.canBuild(self, SPECS.CRUSADER, dir)) {
-        self.log("Building a crusader at " + loc.x + "," + loc.y);
+        //self.log("Building a crusader at " + loc.x + "," + loc.y);
         return self.buildUnit(SPECS.CRUSADER, dir.x, dir.y);
     } else if (nav.checkResources(self, pilgrim_resources) && nav.canBuild(self, SPECS.PILGRIM, dir)) {
-        self.log("Building a pilgrim at " + loc.x + "," + loc.y);
+        //self.log("Building a pilgrim at " + loc.x + "," + loc.y);
         return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
     }
 }

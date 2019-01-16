@@ -87,13 +87,11 @@ nav.randomValidDir = (self) => {
     return null;
 };
 
-/*
 nav.rotate = (coordinateDir, amount) => {
     const compassDir = nav.toCompassDir(coordinateDir);
-    const rotateCompassDir = nav.dirs[(nav.dirsInd[compassDir] + amount) % nav.dirs.len];
+    const rotateCompassDir = nav.dirs[(nav.dirsInd[compassDir] + amount) % nav.dirs.length];
     return nav.toDir(rotateCompassDir);
 };
-*/
 
 nav.reflect = (loc, fullMap, isHorizontalReflection) => {
     const mapLen = fullMap.length;

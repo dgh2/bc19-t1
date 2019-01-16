@@ -13,18 +13,26 @@ castle.turn = (self) => {
     let prophet_fuel = SPECS['UNITS'][SPECS.PROPHET].CONSTRUCTION_FUEL;
     let unitCounts = [];
     let visibleRobots = self.getVisibleRobots();
+    if (nav.exists(unitCounts[self.me.unit])) {
+        unitCounts[self.me.unit] = unitCounts[self.me.unit] + 1;
+    } else {
+        unitCounts[self.me.unit] = 1;
+    }
     for (let i = 0; i < visibleRobots.length; i++) {
         if (!self.isVisible(visibleRobots[i]) || self.team === visibleRobots[i].team) {
-            let unit = visibleRobots[i].church_talk - 1;
+            let unit = parseInt(visibleRobots[i].castle_talk - 1, 10);
+            if (unit === -1) {
+                continue; //ignore new units that have not had a turn yet
+            }
             if (nav.exists(unitCounts[unit])) {
                 unitCounts[unit] = unitCounts[unit] + 1;
             } else {
                 unitCounts[unit] = 1;
             }
-            if (self.step == 0) {
-                unitCounts[self.me.unit] = unitCounts[self.me.unit] + 1;
-            }
         }
+    }
+    if (self.step === 1) {
+        //self.log("Castle count: " + unitCounts[SPECS.CASTLE]);
     }
     
     dir = nav.randomValidDir(self);
@@ -38,10 +46,10 @@ castle.turn = (self) => {
     
     let loc = nav.applyDir(self.me, dir);
     if (unitCounts[SPECS.CHURCH] && nav.checkResources(self, prophet_resources) && nav.canBuild(self, SPECS.PROPHET, dir)) {
-        self.log("Building a prophet at " + loc.x + "," + loc.y);
+        //self.log("Building a prophet at " + loc.x + "," + loc.y);
         return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
     } else if (nav.checkResources(self, pilgrim_resources) && nav.canBuild(self, SPECS.PILGRIM, dir)) {
-        self.log("Building a pilgrim at " + loc.x + "," + loc.y);
+        //self.log("Building a pilgrim at " + loc.x + "," + loc.y);
         return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
     }
 }
