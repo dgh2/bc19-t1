@@ -35,7 +35,7 @@ class Castle {
             self.log("Castle count: " + unitCounts[SPECS.CASTLE]);
         }
         
-        dir = nav.randomValidDir(self);
+        dir = nav.getRandomValidDir(self);
         if (!nav.exists(dir)) {
             //self.log("No valid directions");
             return;
