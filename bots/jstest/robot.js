@@ -7,64 +7,44 @@ import crusader from './crusader.js';
 import prophet from './prophet.js';
 import preacher from './preacher.js';
 
+const SUPPRESS_LOGS = false;
+const FUNCTION_LIST = [castle, church, pilgrim, crusader, prophet, preacher];
 
 class MyRobot extends BCAbstractRobot {
     constructor() {
         super();
-        this.slave = null;
-        this.unit = "";
-        this.step = -1; //add step to self
-        this.oldLog = this.log; //backup original self.log at self.oldLog
-        this.log = this.newLog; //replace self.log calls with self.newLog calls
+        this._slave = null; //names beginning with _ are known to not be intended for use elsewhere
+        this._log = this.log; //backup original self.log at self._log
+        this.log = this._newLog; //replace self.log calls with self._newLog calls
+        this._unit = "";
+        
+        this.self = this;
+        this.step = -1;
         this.specs = null;
     }
     
-    newLog(message) {
-        let loc = "(" + this.me.x + "," + this.me.y + ")";
-        let prefix = this.unit + " " + loc + ": ";
-        this.oldLog(prefix + message); //call back to original self.log now at self.oldLog
+    _newLog(message) {
+        if (!SUPPRESS_LOGS) {
+            let loc = "(" + this.me.x + "," + this.me.y + ")";
+            let prefix = this._unit + " " + loc + ": ";
+            this._log(prefix + message); //call back to original self.log
+        }
     }
     
     turn() {
         if (this.step == -1) {
-            //first turn initialization
-            switch (this.me.unit) {
-                case SPECS.CASTLE:
-                    this.unit = "Castle";
-                    this.slave = castle;
-                    break;
-                case SPECS.CHURCH:
-                    this.unit = "Church";
-                    this.slave = church;
-                    break;
-                case SPECS.PILGRIM:
-                    this.unit = "Pilgrim";
-                    this.slave = pilgrim;
-                    break;
-                case SPECS.CRUSADER:
-                    this.unit = "Crusader";
-                    this.slave = crusader;
-                    break;
-                case SPECS.PROPHET:
-                    this.unit = "Prophet";
-                    this.slave = prophet;
-                    break;
-                case SPECS.PREACHER:
-                    this.unit = "Preacher";
-                    this.slave = preacher;
-                    break;
-                default:
-                    r = this.me;
-                    if (r != null) {
-                        this.log("Invalid unit type: " + r.unit);
-                        throw new TypeError("Invalid unit type: " + r.unit);
-                    }
-            }
-            this.specs = SPECS['UNITS'][this.me.unit];
+            this.initialize();
         }
         this.step++;
-        this.castleTalk(this.me.unit + 1);
-        return this.slave.turn(this);
+        this.castleTalk(this.me.unit + 1); //unit+1 because all units have castle_talk == 0 between creation and their first turn
+        //return new Function('return ' + FUNCTION_LIST[this.me.unit].toLowerCase() + '.turn(this);')(); //don't do this anywhere else
+        return FUNCTION_LIST[this.me.unit].turn(this);
+    }
+    
+    initialize() {
+        //first turn initialization
+        this._unit = FUNCTION_LIST[this.me.unit].constructor.name;
+        this.specs = SPECS['UNITS'][this.me.unit];
     }
 }
 
