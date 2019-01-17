@@ -15,7 +15,7 @@ class Church {
         let pilgrim_resources = {karbonite: church_karbonite + pilgrim_karbonite, fuel: church_fuel + pilgrim_fuel};
         let crusader_resources = {karbonite: church_karbonite + crusader_karbonite, fuel: church_fuel + crusader_fuel};
         
-        dir = nav.randomValidDir(self);
+        dir = nav.getRandomValidDir(self);
         if (!nav.exists(dir)) {
             self.log("No valid directions");
             return;
