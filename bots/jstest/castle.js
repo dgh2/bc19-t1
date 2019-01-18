@@ -1,56 +1,111 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
 import nav from './nav.js';
 
-var dir = null;
+const CHURCH_KARBONITE = SPECS['UNITS'][SPECS.CHURCH].CONSTRUCTION_KARBONITE;
+const CHURCH_FUEL = SPECS['UNITS'][SPECS.CHURCH].CONSTRUCTION_FUEL;
+const PILGRIM_KARBONITE = SPECS['UNITS'][SPECS.PILGRIM].CONSTRUCTION_KARBONITE;
+const PILGRIM_FUEL = SPECS['UNITS'][SPECS.PILGRIM].CONSTRUCTION_FUEL;
+const PROPHET_KARBONITE = SPECS['UNITS'][SPECS.PROPHET].CONSTRUCTION_KARBONITE;
+const PROPHET_FUEL = SPECS['UNITS'][SPECS.PROPHET].CONSTRUCTION_FUEL;
+const CHURCH_COSTS = {karbonite: CHURCH_KARBONITE, fuel: CHURCH_FUEL};
+const PILGRIM_COSTS = {karbonite: PILGRIM_KARBONITE, fuel: PILGRIM_FUEL};
+const PROPHET_COSTS = {karbonite: PROPHET_KARBONITE, fuel: PROPHET_FUEL};
+
+var dir;
+var self;
+var unit_counts = [];
 
 class Castle {
+    shortTurn(self) {
+        this.self = self;
+        let action;
+        action = this.attackClosestEnemy();
+        if (nav.exists(action)) {return action;} //return if attacking any enemy
+        
+        dir = nav.getRandomValidDir(self);
+        if (!nav.exists(dir)) {
+            self.log("No valid directions");
+            return; //stop early if there are no directions to build in
+        }
+        
+        //TODO: if a visible resource is unoccupied and we have enough resources to build a pilgrim and a church, build a pilgrim
+        let pilgrim_buffer = {karbonite: 2*CHURCH_KARBONITE + PILGRIM_KARBONITE, fuel: 2*CHURCH_FUEL + PILGRIM_FUEL};
+        if (nav.checkResources(self, pilgrim_buffer) && nav.canBuild(self, SPECS.PILGRIM, dir)) {
+            self.log("Building a pilgrim at " + loc.x + "," + loc.y);
+            return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
+        }
+    }
+    
     turn(self) {
-        let church_karbonite = SPECS['UNITS'][SPECS.CHURCH].CONSTRUCTION_KARBONITE;
-        let church_fuel = SPECS['UNITS'][SPECS.CHURCH].CONSTRUCTION_FUEL;
-        let pilgrim_karbonite = SPECS['UNITS'][SPECS.PILGRIM].CONSTRUCTION_KARBONITE;
-        let pilgrim_fuel = SPECS['UNITS'][SPECS.PILGRIM].CONSTRUCTION_FUEL;
-        let prophet_karbonite = SPECS['UNITS'][SPECS.PROPHET].CONSTRUCTION_KARBONITE;
-        let prophet_fuel = SPECS['UNITS'][SPECS.PROPHET].CONSTRUCTION_FUEL;
-        let unitCounts = [];
-        let visibleRobots = self.getVisibleRobots();
-        if (nav.exists(unitCounts[self.me.unit])) {
-            unitCounts[self.me.unit] = unitCounts[self.me.unit] + 1;
-        } else {
-            unitCounts[self.me.unit] = 1;
+        this.self = self;
+        
+        this.updateUnitCounts(self);
+        if (self.step === 1) {
+            self.log("Castle count: " + unit_counts[SPECS.CASTLE]);
+        }
+        
+        let action;
+        //let closestEnemyAttacker = nav.getVisibleRobots(self, enemy_team, [SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
+        action = this.attackClosestEnemy(SPECS.CASTLE);
+        if (nav.exists(action)) {return action;} //return if attacking an enemy castle
+        action = this.attackClosestEnemy(SPECS.CHURCH);
+        if (nav.exists(action)) {return action;} //return if attacking an enemy church
+        action = this.attackClosestEnemy([SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
+        if (nav.exists(action)) {return action;} //return if attacking an offensive enemy
+        action = this.attackClosestEnemy();
+        if (nav.exists(action)) {return action;} //return if attacking any enemy
+        
+        dir = nav.getRandomValidDir(self);
+        if (!nav.exists(dir)) {
+            self.log("No valid directions");
+            return; //stop early if there are no directions to build in
+        }
+        
+        let prophet_buffer = {karbonite: 2*CHURCH_KARBONITE + PROPHET_KARBONITE, fuel: 2*CHURCH_FUEL + PROPHET_FUEL};
+        let pilgrim_buffer = {karbonite: 2*CHURCH_KARBONITE + PILGRIM_KARBONITE, fuel: 2*CHURCH_FUEL + PILGRIM_FUEL};
+        
+        let loc = nav.applyDir(self.me, dir);
+        if (unit_counts[SPECS.CHURCH] && nav.checkResources(self, prophet_buffer) && nav.canBuild(self, SPECS.PROPHET, dir)) {
+            self.log("Building a prophet at " + loc.x + "," + loc.y);
+            return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
+        } else if (self.step === 0 || (nav.checkResources(self, pilgrim_buffer) && nav.canBuild(self, SPECS.PILGRIM, dir))) {
+            self.log("Building a pilgrim at " + loc.x + "," + loc.y);
+            return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
+        }
+    }
+    
+    attackClosestEnemy(units) { //attack the closest enemy with a type included the units array
+        let closestEnemyAttackers = nav.getVisibleRobots(this.self, this.self.enemy_team, units);
+        if (nav.exists(closestEnemyAttackers) && closestEnemyAttackers.length) {
+            let closest = closestEnemyAttackers[0];
+            if (nav.sqDist(this.self.me, closest) <= this.self.specs.ATTACK_RADIUS) {
+                let attack_offset = {x: closest.x - this.self.me.x, y: closest.y - this.self.me.y};
+                return self.attack(attack_offset.x, attack_offset.y);
+            }
+        }
+    }
+    
+    updateUnitCounts(self) {
+        let visibleRobots = this.self.getVisibleRobots();
+        if (self.step == 0) {
+            if (nav.exists(unit_counts[this.self.me.unit])) {
+                unit_counts[this.self.me.unit] = unit_counts[this.self.me.unit] + 1;
+            } else {
+                unit_counts[this.self.me.unit] = 1;
+            }
         }
         for (let i = 0; i < visibleRobots.length; i++) {
-            if (!self.isVisible(visibleRobots[i]) || self.team === visibleRobots[i].team) {
+            if (!this.self.isVisible(visibleRobots[i]) || this.self.team === visibleRobots[i].team) {
                 let unit = visibleRobots[i].castle_talk - 1;
                 if (unit === -1) {
                     continue; //ignore new units that have not had a turn yet
                 }
-                if (nav.exists(unitCounts[unit])) {
-                    unitCounts[unit] = unitCounts[unit] + 1;
+                if (nav.exists(unit_counts[unit])) {
+                    unit_counts[unit] = unit_counts[unit] + 1;
                 } else {
-                    unitCounts[unit] = 1;
+                    unit_counts[unit] = 1;
                 }
             }
-        }
-        if (self.step === 1) {
-            self.log("Castle count: " + unitCounts[SPECS.CASTLE]);
-        }
-        
-        dir = nav.getRandomValidDir(self);
-        if (!nav.exists(dir)) {
-            //self.log("No valid directions");
-            return;
-        }
-        
-        let prophet_resources = {karbonite: 2*church_karbonite + prophet_karbonite, fuel: 2*church_fuel + prophet_fuel};
-        let pilgrim_resources = {karbonite: church_karbonite + pilgrim_karbonite, fuel: church_fuel + pilgrim_fuel};
-        
-        let loc = nav.applyDir(self.me, dir);
-        if (unitCounts[SPECS.CHURCH] && nav.checkResources(self, prophet_resources) && nav.canBuild(self, SPECS.PROPHET, dir)) {
-            self.log("Building a prophet at " + loc.x + "," + loc.y);
-            return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
-        } else if (nav.checkResources(self, pilgrim_resources) && nav.canBuild(self, SPECS.PILGRIM, dir)) {
-            self.log("Building a pilgrim at " + loc.x + "," + loc.y);
-            return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
         }
     }
 };

@@ -55,14 +55,32 @@ class Nav {
     }
 
     getRandomValidDir(self) {
+        let choice;
         let randomCompassDirs = this.getRandomCompassDirs();
         for (let i = 0; i < randomCompassDirs.length; i++) {
-            let randomDir = this.toDir(randomCompassDirs[i]);
-            if (this.isPassable(self, this.applyDir(self.me, randomDir))) {
-                return randomDir;
+            let random_dir = this.toDir(randomCompassDirs[i]);
+            let loc = this.applyDir(self.me, random_dir);
+            if (this.isPassable(self, loc)) {
+                let random_dir_karbonite = self.getKarboniteMap()[loc.y][loc.x];
+                let random_dir_fuel = self.getFuelMap()[loc.y][loc.x];
+                if (!random_dir_karbonite && !random_dir_fuel) {
+                    return random_dir;
+                }
+                
+                if (!nav.exists(choice)) {
+                    choice = random_dir;
+                } else {
+                    let choice_karbonite = self.getKarboniteMap()[choice.y][choice.x];
+                    let choice_fuel = self.getFuelMap()[choice.y][choice.x];
+                    let overwrite_karbonite = choice_karbonite && !self.getKarboniteMap()[loc.y][loc.x];
+                    let overwrite_fuel = choice_fuel && !random_dir_fuel && !random_dir_karbonite;
+                    if ((choice_karbonite && !overwrite_karbonite) || (choice_fuel && !overwrite_fuel && !overwrite_karbonite)) {
+                        choice = random_dir;
+                    }
+                }
             }
         }
-        return null;
+        return choice;
     }
 
     rotate(coordinateDir, amount) {

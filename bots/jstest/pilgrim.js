@@ -1,9 +1,14 @@
 import {BCAbstractRobot, SPECS} from 'battlecode';
 import nav from './nav.js';
 
-const MEMORY = 15;
+const CHURCH_KARBONITE = SPECS['UNITS'][SPECS.CHURCH].CONSTRUCTION_KARBONITE;
+const CHURCH_FUEL = SPECS['UNITS'][SPECS.CHURCH].CONSTRUCTION_FUEL;
+const CHURCH_COSTS = {karbonite: CHURCH_KARBONITE, fuel: CHURCH_FUEL};
 
-var dir;
+const MEMORY = 15;
+const MAX_MOVEMENT = 3**2;
+
+//var dir;
 var castles = [];
 var churches = [];
 var occupied_karbonite = [];
@@ -11,6 +16,8 @@ var occupied_fuel = [];
 
 class Pilgrim {
     turn(self) {
+        this.self = self;
+        
         //*
         //maintain current castles list
         for (let i = castles.length - 1; i >= 0; i--) { //iterate in reverse so removing elements during iteration doesn't cause problems
@@ -82,41 +89,72 @@ class Pilgrim {
             base_direction = nav.getDir(self.me, base);
         }
         
-        //*/
         
+        if (nav.exists(base) && self.getVisibleRobotMap()[base.y][base.x] === 0) {
+            base = null; //the base died
+        }
+        if (!nav.exists(base) && castles.length) {
+            base = castles[0];
+        }
+        if (!nav.exists(base) && churches.length) {
+            base = churches[0];
+        }
+        
+        //TODO: Better should_deposit logic
         /*
-        base_distance = null
-        if home_castle exists and home_castle location visible and not occupied:
-            home_castle = null
-        if first turn or no home_castle:
-            home_castle = closest visible castle
-        base = closest visible castle or church
-        if no base:
-            base = home_castle
-        if base exists:
-            base_distance = distance from self.me to base
-        set deposit_moves = ceiling((base_distance-1) / max_movement_range)
-        set num_turns_not_mining = 1 + (2 * deposit_moves)
-        set deposit_fuel_cost = (movement_cost * base_distance) + ((fuel_per_mine - mining_fuel_cost) * num_turns_not_mining)
-        set deposit_karbonite_cost = (movement_cost * base_distance) + (karbonite_per_mine * num_turns_not_mining)
+        set deposit_moves = ceil((base_distance-1) / max_movement_range)
+        set turns_not_mining = 1 + (2 * deposit_moves)
+        set deposit_fuel_cost = (movement_cost * base_distance) + ((fuel_per_mine - mining_fuel_cost) * turns_not_mining)
+        set deposit_karbonite_cost = (movement_cost * base_distance) + (karbonite_per_mine * turns_not_mining)
         set should_deposit_karbonite = (team karbonite >= church_karbonite && full_karbonite) 
                                             || (team karbonite < church_karbonite && team karbonite + carried karbonite >= church_karbonite)
         set should_deposit_fuel = (team fuel >= church_fuel && full_fuel) 
                                             || (team fuel < church_fuel && team fuel + carried fuel - deposit_fuel_cost >= church_fuel)
         set should_deposit = should_deposit_karbonite || should_deposit_fuel
-        if should_deposit:
-            if adjacent to base:
-                deposit to base
-            if near base and team fuel > deposit_fuel_cost:
-                teleport to base
-            else if hasResources(church_cost):
-                find valid direction not on a resource:
-                    build church there
-            else:
-                walk slowly toward base
-
-
-
+        */
+        let should_deposit_karbonite = self.karbonite < 2*CHURCH_KARBONITE || self.me.karbonite >= self.specs.KARBONITE_CAPACITY;
+        let should_deposit_fuel = self.karbonite < 2*CHURCH_FUEL || self.me.fuel >= self.specs.FUEL_CAPACITY;
+        let should_deposit = should_deposit_karbonite || should_deposit_fuel;
+        if (nav.exists(base) && should_deposit) {
+            let action;
+            action = this.deposit(base);
+            if (nav.exists(action)) {return action;} //return if depositing
+            
+            if (base_distance < MAX_MOVEMENT) {
+                let deposit_moves = Math.ceil((base_distance - 1) / MAX_MOVEMENT);
+                let turns_not_mining = 1 + (2 * deposit_moves);
+                let deposit_fuel_cost = ((base_distance*self.specs.FUEL_PER_MOVE)+((SPECS.FUEL_YIELD - SPECS.MINE_FUEL_COST)*turns_not_mining));
+                //let deposit_karbonite_cost = SPECS.KARBONITE_YIELD*turns_not_mining;
+                action = this.moveToward(base, deposit_fuel_cost / turns_not_mining);
+                if (nav.exists(action)) {return action;} //return if moving toward base
+            }
+            
+            if (nav.checkResources(self, CHURCH_COSTS)) {
+                let dir = nav.getRandomValidDir(self);
+                if (nav.exists(dir)) {
+                    return self.buildUnit(SPECS.CHURCH, dir);
+                }
+            }
+            
+            action = this.moveToward(base, self.specs.FUEL_PER_MOVE);
+            if (nav.exists(action)) {return action;} //return if moving toward base
+        }
+        
+        let karbonite_full = self.me.karbonite >= self.specs.KARBONITE_CAPACITY;
+        let fuel_full = self.me.fuel >= self.specs.FUEL_CAPACITY;
+        let target_karbonite = !karbonite_full && (self.karbonite < 3*CHURCH_KARBONITE || self.karbonite <= self.fuel);
+        let target_fuel = !fuel_full && (self.fuel < 3*CHURCH_FUEL || self.fuel < self.karbonite);
+        if (target_karbonite) {
+            action = this.moveToward(base, self.specs.FUEL_PER_MOVE);
+            if (nav.exists(action)) {return action;} //return if moving toward base
+        }
+        if (target_fuel) {
+            action = this.moveToward(base, self.specs.FUEL_PER_MOVE);
+            if (nav.exists(action)) {return action;} //return if moving toward base
+        }
+        //*/
+        
+        /*
         store occupied_karbonite as all locations with a karbonite and a visible pilgrim
         store occupied_fuel as all locations with a fuel and a visible pilgrim
         determine if should target fuel or karbonite, heuristic needs to target karbonite in very early game
@@ -133,13 +171,13 @@ class Pilgrim {
         let church_resources = {karbonite: church_karbonite, fuel: church_fuel};
 
         let step = self.step;
-        let enemyTeam = (self.team == 0 ? 1 : 0);
+        let enemy_team = (self.team == 0 ? 1 : 0);
         let closestBases = nav.getVisibleRobots(self, self.team, [SPECS.CASTLE, SPECS.CHURCH]);
         let closestKarbonite = nav.findClosestPassableKarbonite(self);
         let closestKarboniteDistance = -1;
         let closestFuel = nav.findClosestPassableFuel(self);
         let closestFuelDistance = -1;
-        let closestEnemies = nav.getVisibleRobots(self, enemyTeam, [SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
+        let closestEnemies = nav.getVisibleRobots(self, enemy_team, [SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
         let more_karbonite = self.karbonite > self.fuel;
         let more_fuel = self.fuel >= self.karbonite;
         let near_wanted_resource = false;
@@ -201,10 +239,10 @@ class Pilgrim {
         
         if (nav.exists(closestBases) && closestBases.length && at_base && (karbonite_full || fuel_full)) {
             let baseDir = nav.getDir(self.me, closestBases[0]);
-            let giveReport = self.me.karbonite + " karbonite and " + self.me.fuel + " fuel";
-            let resourceReport = self.karbonite + " karbonite and " + self.fuel + " fuel";
-            self.log("Giving " + giveReport + " to base to the " + nav.toCompassDir(baseDir));
-            self.log("Total resources: " + resourceReport);
+            let give_report = self.me.karbonite + " karbonite and " + self.me.fuel + " fuel";
+            let resource_report = self.karbonite + " karbonite and " + self.fuel + " fuel";
+            self.log("Giving " + give_report + " to base to the " + nav.toCompassDir(baseDir));
+            self.log("Total resources: " + resource_report);
             return self.give(baseDir.x, baseDir.y, self.me.karbonite, self.me.fuel);
         }
         if (on_fuel && !fuel_full) {
@@ -281,6 +319,29 @@ class Pilgrim {
             self.log("No valid dirs");
         }
         //*/
+    }
+    
+    deposit(base) {
+        let me = this.self.me;
+        if (nav.exists(base) && (me.karbonite || me.fuel) && nav.sqDir(me, base) < 2**2) {
+            let give_report = me.karbonite + " karbonite and " + me.fuel + " fuel";
+            let resource_report = (this.self.karbonite + me.karbonite) + " karbonite and " + (this.self.fuel + me.fuel) + " fuel";
+            let base_dir = nav.getDir(me, base);
+            this.self.log("Giving " + give_report + " to the " + nav.toCompassDir(base_dir) + ". " + "Total resources: " + resource_report);
+            return this.self.give(base_dir.x, base_dir.y, me.karbonite, me.fuel);
+        }
+    }
+    
+    moveToward(loc, max_fuel) {
+        //TODO: jump to farthest location costing less than max_fuel
+        let rotation = this.self.me.team ? 1 : -1;
+        let dir = nav.getDir(this.self.me, loc);
+        for (let i = 0; i < 8; i++) {
+            if (nav.isPassable(this.self, nav.applyDir(this.self.me, dir))) {
+                return this.self.move(dir.x, dir.y);
+            }
+            dir = nav.rotate(dir, rotation);
+        }
     }
 }
 

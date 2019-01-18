@@ -5,14 +5,16 @@ var dir = null;
 
 class Prophet {
     turn(self) {
+        this.self = self;
+        
         let prophetWall = 1;
         
-        let enemyTeam = (self.team == 0 ? 1 : 0);
-        let closestEnemies = nav.getVisibleRobots(self, enemyTeam);
-        let closestEnemyAttacker = nav.getVisibleRobots(self, enemyTeam, [SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
-        let closestEnemyPilgrims = nav.getVisibleRobots(self, enemyTeam, SPECS.PILGRIM);
-        let closestEnemyBuilding = nav.getVisibleRobots(self, enemyTeam, [SPECS.CASTLE, SPECS.CHURCH]);
-        let closestEnemyCastle = nav.getVisibleRobots(self, enemyTeam, SPECS.CASTLE);
+        let enemy_team = (self.team == 0 ? 1 : 0);
+        let closestEnemies = nav.getVisibleRobots(self, enemy_team);
+        let closestEnemyAttacker = nav.getVisibleRobots(self, enemy_team, [SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
+        let closestEnemyPilgrims = nav.getVisibleRobots(self, enemy_team, SPECS.PILGRIM);
+        let closestEnemyBuilding = nav.getVisibleRobots(self, enemy_team, [SPECS.CASTLE, SPECS.CHURCH]);
+        let closestEnemyCastle = nav.getVisibleRobots(self, enemy_team, SPECS.CASTLE);
         
         if (nav.exists(closestEnemyAttacker) && closestEnemyAttacker.length) {
             let closest = closestEnemyAttacker[0];

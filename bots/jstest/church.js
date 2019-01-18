@@ -5,6 +5,8 @@ var dir = null;
 
 class Church {
     turn(self) {
+        this.self = self;
+        
         let church_karbonite = SPECS['UNITS'][SPECS.CHURCH].CONSTRUCTION_KARBONITE;
         let church_fuel = SPECS['UNITS'][SPECS.CHURCH].CONSTRUCTION_FUEL;
         let pilgrim_karbonite = SPECS['UNITS'][SPECS.PILGRIM].CONSTRUCTION_KARBONITE;
@@ -12,10 +14,10 @@ class Church {
         let crusader_karbonite = SPECS['UNITS'][SPECS.CRUSADER].CONSTRUCTION_KARBONITE;
         let crusader_fuel = SPECS['UNITS'][SPECS.CRUSADER].CONSTRUCTION_FUEL;
         
-        let pilgrim_resources = {karbonite: church_karbonite + pilgrim_karbonite, fuel: church_fuel + pilgrim_fuel};
-        let crusader_resources = {karbonite: church_karbonite + crusader_karbonite, fuel: church_fuel + crusader_fuel};
+        let pilgrim_resources = {karbonite: 3*church_karbonite + pilgrim_karbonite, fuel: 3*church_fuel + pilgrim_fuel};
+        let crusader_resources = {karbonite: 3*church_karbonite + crusader_karbonite, fuel: 3*church_fuel + crusader_fuel};
         
-        dir = nav.randomValidDir(self);
+        dir = nav.getRandomValidDir(self);
         if (!nav.exists(dir)) {
             self.log("No valid directions");
             return;
