@@ -7,33 +7,67 @@ class Crusader {
     turn(self) {
         this.self = self;
         
-        let church_karbonite = SPECS['UNITS'][SPECS.CHURCH].CONSTRUCTION_KARBONITE;
-        let church_fuel = SPECS['UNITS'][SPECS.CHURCH].CONSTRUCTION_FUEL;
-        let church_resources = {karbonite: church_karbonite, fuel: church_fuel};
-        let movement_resources = {karbonite: 0, fuel: church_fuel + self.specs.FUEL_TO_MOVE};
+        let closestEnemyAttackers = nav.getVisibleRobots(self, self.enemy_team, [SPECS.CASTLE, SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
+        let closestEnemyPilgrims = nav.getVisibleRobots(self, self.enemy_team, SPECS.PILGRIM);
+        let closestEnemyChurchs = nav.getVisibleRobots(self, self.enemy_team, SPECS.CHURCH);
         
-        let enemy_team = (self.team == 0 ? 1 : 0);
-        let closestEnemies = nav.getVisibleRobots(self, enemy_team);
-        let closestEnemyAttacker = nav.getVisibleRobots(self, enemy_team, [SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
-        let closestEnemyPilgrims = nav.getVisibleRobots(self, enemy_team, SPECS.PILGRIM);
-        let closestEnemyBuilding = nav.getVisibleRobots(self, enemy_team, [SPECS.CASTLE, SPECS.CHURCH]);
-        let closestEnemyCastle = nav.getVisibleRobots(self, enemy_team, SPECS.CASTLE);
+        let action;
+        action = this.attackClosestEnemy(SPECS.CASTLE);
+        if (nav.exists(action)) {return action;} //return if attacking an enemy castle
+        action = this.attackClosestEnemy(SPECS.CHURCH);
+        if (nav.exists(action)) {return action;} //return if attacking an enemy church
+        action = this.attackClosestEnemy(SPECS.PROPHET);
+        if (nav.exists(action)) {return action;} //return if attacking a prophet
+        action = this.attackClosestEnemy(SPECS.CRUSADER);
+        if (nav.exists(action)) {return action;} //return if attacking a crusader
+        action = this.attackClosestEnemy(SPECS.PREACHER);
+        if (nav.exists(action)) {return action;} //return if attacking a preacher
+        action = this.attackClosestEnemy();
+        if (nav.exists(action)) {return action;} //return if attacking any enemy
         
-        if (nav.exists(closestEnemyAttacker) && closestEnemyAttacker.length) {
-            let closest = closestEnemyAttacker[0];
+        if (nav.exists(closestEnemyAttackers) && closestEnemyAttackers.length) {
+            let closest = closestEnemyAttackers[0];
             let distance = nav.sqDist(self.me, closest);
             let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
-            self.log("closestEnemyAttacker: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
-            if (distance >= self.specs.ATTACK_RADIUS[0] && distance <= self.specs.ATTACK_RADIUS[1]) {
-                self.log("Attacking closestEnemyAttacker: " + closest.x + "," + closest.y);
-                let attack_offset = {x: closest.x - self.me.x, y: closest.y - self.me.y};
-                return self.attack(attack_offset.x, attack_offset.y);
-            //} else if () { //TODO: kite, if enemy can attack and we can leave their attack range in one move, do so
-            } else {
-                self.log("Moving toward closestEnemyAttacker: " + closest.x + "," + closest.y + " to the " + compassDir);
+            //self.log("closestEnemyAttacker: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
+            //if () {
+                //TODO: kite, if enemy can attack us and we can leave their attack range in one move, do so
+                //TODO: for prophets, try to move inside their attack radius
+            //} else {
+                self.log("Moving toward closest enemy attacker: " + closest.x + "," + closest.y + " to the " + compassDir);
                 let attack_offset = {x: closest.x - self.me.x, y: closest.y - self.me.y};
                 dir = nav.getDir(self.me, closest);
-            }
+            //}
+        }
+        
+        if (nav.exists(closestEnemyPilgrims) && closestEnemyPilgrims.length) {
+            let closest = closestEnemyPilgrims[0];
+            let distance = nav.sqDist(self.me, closest);
+            let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
+            //self.log("closestEnemyPilgrim: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
+            //if () {
+                //TODO: kite, if enemy can attack us and we can leave their attack range in one move, do so
+                //TODO: for prophets, try to move inside their attack radius
+            //} else {
+                self.log("Moving toward closest enemy pilgrim: " + closest.x + "," + closest.y + " to the " + compassDir);
+                let attack_offset = {x: closest.x - self.me.x, y: closest.y - self.me.y};
+                dir = nav.getDir(self.me, closest);
+            //}
+        }
+        
+        if (nav.exists(closestEnemyChurchs) && closestEnemyChurchs.length) {
+            let closest = closestEnemyChurchs[0];
+            let distance = nav.sqDist(self.me, closest);
+            let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
+            //self.log("closestEnemyChurch: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
+            //if () {
+                //TODO: kite, if enemy can attack us and we can leave their attack range in one move, do so
+                //TODO: for prophets, try to move inside their attack radius
+            //} else {
+                self.log("Moving toward closest enemy church: " + closest.x + "," + closest.y + " to the " + compassDir);
+                let attack_offset = {x: closest.x - self.me.x, y: closest.y - self.me.y};
+                dir = nav.getDir(self.me, closest);
+            //}
         }
         
         if (nav.exists(dir) && !nav.isPassable(self, nav.applyDir(self.me, dir))) {
@@ -47,6 +81,18 @@ class Crusader {
             return self.move(dir.x, dir.y);
         }
         self.log("No valid dirs");
+    }
+    
+    attackClosestEnemy(units) { //attack the closest enemy with a type included the units array
+        let closestEnemies = nav.getVisibleRobots(this.self, this.self.enemy_team, units);
+        if (nav.exists(closestEnemies) && closestEnemies.length) {
+            let closest = closestEnemies[0];
+            let distance = nav.sqDist(this.self.me, closest);
+            if (distance >= this.self.specs.ATTACK_RADIUS[0] && distance <= this.self.specs.ATTACK_RADIUS[1]) {
+                let attack_offset = {x: closest.x - this.self.me.x, y: closest.y - this.self.me.y};
+                return this.self.attack(attack_offset.x, attack_offset.y);
+            }
+        }
     }
 }
 

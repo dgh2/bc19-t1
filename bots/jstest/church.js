@@ -13,9 +13,12 @@ class Church {
         let pilgrim_fuel = SPECS['UNITS'][SPECS.PILGRIM].CONSTRUCTION_FUEL;
         let crusader_karbonite = SPECS['UNITS'][SPECS.CRUSADER].CONSTRUCTION_KARBONITE;
         let crusader_fuel = SPECS['UNITS'][SPECS.CRUSADER].CONSTRUCTION_FUEL;
+        let prophet_karbonite = SPECS['UNITS'][SPECS.PROPHET].CONSTRUCTION_KARBONITE;
+        let prophet_fuel = SPECS['UNITS'][SPECS.PROPHET].CONSTRUCTION_FUEL;
         
         let pilgrim_resources = {karbonite: 3*church_karbonite + pilgrim_karbonite, fuel: 3*church_fuel + pilgrim_fuel};
         let crusader_resources = {karbonite: 3*church_karbonite + crusader_karbonite, fuel: 3*church_fuel + crusader_fuel};
+        let prophet_resources = {karbonite: 3*church_karbonite + prophet_karbonite, fuel: 3*church_fuel + prophet_fuel};
         
         dir = nav.getRandomValidDir(self);
         if (!nav.exists(dir)) {
@@ -23,13 +26,17 @@ class Church {
             return;
         }
         let loc = nav.applyDir(self.me, dir);
-        if (self.step % 3 === 0 && nav.checkResources(self, crusader_resources) && nav.canBuild(self, SPECS.CRUSADER, dir)) {
-            self.log("Building a crusader at " + loc.x + "," + loc.y);
-            return self.buildUnit(SPECS.CRUSADER, dir.x, dir.y);
-        } else if (nav.checkResources(self, pilgrim_resources) && nav.canBuild(self, SPECS.PILGRIM, dir)) {
+        if (self.step % 5 === 0 && nav.checkResources(self, pilgrim_resources) && nav.canBuild(self, SPECS.PILGRIM, dir)) {
             self.log("Building a pilgrim at " + loc.x + "," + loc.y);
             return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
+        } else if (self.step % 3 === 0 && nav.checkResources(self, crusader_resources) && nav.canBuild(self, SPECS.CRUSADER, dir)) {
+            self.log("Building a crusader at " + loc.x + "," + loc.y);
+            return self.buildUnit(SPECS.CRUSADER, dir.x, dir.y);
         }
+        /*else if (self.step % 2 === 0 && nav.checkResources(self, prophet_resources) && nav.canBuild(self, SPECS.PROPHET, dir)) {
+            self.log("Building a prophet at " + loc.x + "," + loc.y);
+            return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
+        }*/
     }
 }
 

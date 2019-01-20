@@ -7,37 +7,45 @@ class Prophet {
     turn(self) {
         this.self = self;
         
-        let prophetWall = 1;
+        let prophet_wall = 1;
         
-        let enemy_team = (self.team == 0 ? 1 : 0);
-        let closestEnemies = nav.getVisibleRobots(self, enemy_team);
-        let closestEnemyAttacker = nav.getVisibleRobots(self, enemy_team, [SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
-        let closestEnemyPilgrims = nav.getVisibleRobots(self, enemy_team, SPECS.PILGRIM);
-        let closestEnemyBuilding = nav.getVisibleRobots(self, enemy_team, [SPECS.CASTLE, SPECS.CHURCH]);
-        let closestEnemyCastle = nav.getVisibleRobots(self, enemy_team, SPECS.CASTLE);
+        let action;
+        action = this.attackClosestEnemy(SPECS.CASTLE);
+        if (nav.exists(action)) {return action;} //return if attacking an enemy castle
+        action = this.attackClosestEnemy(SPECS.CHURCH);
+        if (nav.exists(action)) {return action;} //return if attacking an enemy church
+        action = this.attackClosestEnemy(SPECS.PREACHER);
+        if (nav.exists(action)) {return action;} //return if attacking a preacher
+        action = this.attackClosestEnemy(SPECS.PROPHET);
+        if (nav.exists(action)) {return action;} //return if attacking a prophet
+        action = this.attackClosestEnemy(SPECS.CRUSADER);
+        if (nav.exists(action)) {return action;} //return if attacking a crusader
+        action = this.attackClosestEnemy();
+        if (nav.exists(action)) {return action;} //return if attacking any enemy
         
-        if (nav.exists(closestEnemyAttacker) && closestEnemyAttacker.length) {
-            let closest = closestEnemyAttacker[0];
-            let distance = nav.sqDist(self.me, closest);
-            let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
-            self.log("closestEnemyAttacker: " + closest.x + "," + closest.y + " is " + distance + " to the " + compassDir);
-            if (distance >= self.specs.ATTACK_RADIUS[0] && distance <= self.specs.ATTACK_RADIUS[1]) {
-                self.log("Attacking closestEnemyAttacker: " + closest.x + "," + closest.y);
-                let attack_offset = {x: closest.x - self.me.x, y: closest.y - self.me.y};
-                return self.attack(attack_offset.x, attack_offset.y);
-            }
-        }
-        
-        if (self.step < prophetWall - 1) { //step away from bases for wall-1 turns (wall=1 => 0 steps, wall=2 => 1 step)
-            let closestBases = nav.getVisibleRobots(self, self.team, [SPECS.CASTLE]);
-            if (self.step === 0 && nav.exists(closestBases) && closestBases.length) {
-                dir = nav.getDir(self.me, closestBases[0]); //get direction toward from closest base
+        let closest_bases = nav.getVisibleRobots(self, self.team, SPECS.CASTLE);
+        if (nav.exists(closest_bases) && closest_bases.length) {
+            if (self.step === 0) {
+                dir = nav.getDir(self.me, closest_bases[0]); //get direction toward from closest base
                 if (nav.exists(dir)) {
                     dir = nav.rotate(dir, 4); //get opposite direction
                 }
             }
-            if (nav.exists(dir)) {
+            let dist = nav.sqDist(self.me, closest_bases[0]);
+            if (dist < prophet_wall) {
                 return self.move(dir.x, dir.y); //step in direction
+            }
+        }
+    }
+    
+    attackClosestEnemy(units) { //attack the closest enemy with a type included the units array
+        let closestEnemies = nav.getVisibleRobots(this.self, this.self.enemy_team, units);
+        if (nav.exists(closestEnemies) && closestEnemies.length) {
+            let closest = closestEnemies[0];
+            let distance = nav.sqDist(this.self.me, closest);
+            if (distance >= this.self.specs.ATTACK_RADIUS[0] && distance <= this.self.specs.ATTACK_RADIUS[1]) {
+                let attack_offset = {x: closest.x - this.self.me.x, y: closest.y - this.self.me.y};
+                return this.self.attack(attack_offset.x, attack_offset.y);
             }
         }
     }

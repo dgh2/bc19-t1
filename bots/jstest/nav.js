@@ -58,9 +58,18 @@ class Nav {
         let choice;
         let randomCompassDirs = this.getRandomCompassDirs();
         for (let i = 0; i < randomCompassDirs.length; i++) {
+            /*
+            let check_dir = this.toDir(randomCompassDirs[i]);
+            let check_loc = this.applyDir(self.me, check_dir);
+            if (this.isPassable(self, check_loc)) {
+                return check_dir;
+            //*/
+            //*
             let random_dir = this.toDir(randomCompassDirs[i]);
             let loc = this.applyDir(self.me, random_dir);
             if (this.isPassable(self, loc)) {
+                return random_dir;
+            
                 let random_dir_karbonite = self.getKarboniteMap()[loc.y][loc.x];
                 let random_dir_fuel = self.getFuelMap()[loc.y][loc.x];
                 if (!random_dir_karbonite && !random_dir_fuel) {
@@ -70,22 +79,29 @@ class Nav {
                 if (!nav.exists(choice)) {
                     choice = random_dir;
                 } else {
-                    let choice_karbonite = self.getKarboniteMap()[choice.y][choice.x];
-                    let choice_fuel = self.getFuelMap()[choice.y][choice.x];
-                    let overwrite_karbonite = choice_karbonite && !self.getKarboniteMap()[loc.y][loc.x];
+                    let choice_loc = this.applyDir(self.me, choice);
+                    let choice_karbonite = self.getKarboniteMap()[choice_loc.y][choice_loc.x];
+                    let choice_fuel = self.getFuelMap()[choice_loc.y][choice_loc.x];
+                    let overwrite_karbonite = choice_karbonite && !random_dir_karbonite;
                     let overwrite_fuel = choice_fuel && !random_dir_fuel && !random_dir_karbonite;
-                    if ((choice_karbonite && !overwrite_karbonite) || (choice_fuel && !overwrite_fuel && !overwrite_karbonite)) {
+                    if (overwrite_karbonite || overwrite_fuel) {
                         choice = random_dir;
                     }
                 }
+                //*/
             }
         }
         return choice;
     }
 
     rotate(coordinateDir, amount) {
-        const compassDir = this.toCompassDir(coordinateDir);
-        const rotateCompassDir = COMPASS_DIRS[(COMPASS_DIRS.indexOf(compassDir) + amount) % COMPASS_DIRS.length];
+        amount = amount % COMPASS_DIRS.length;
+        if (amount < 0) {
+            amount = amount + COMPASS_DIRS.length 
+        }
+        let compassDir = this.toCompassDir(coordinateDir);
+        let index = COMPASS_DIRS.indexOf(compassDir);
+        let rotateCompassDir = COMPASS_DIRS[(index + amount) % COMPASS_DIRS.length];
         return this.toDir(rotateCompassDir);
     }
 
@@ -196,17 +212,27 @@ class Nav {
         let visibleRobots = self.getVisibleRobots();
         for (let i = 0; i < visibleRobots.length; i++) {
             let robot = visibleRobots[i];
+            /*
+            if (self.isVisible(robot)) {
+                if (!this.exists(team)) {
+                    self.log('team doesn\'t matter');
+                } else if (robot.team === team) {
+                    self.log('team matches requested team: ' + team);
+                }
+            }
+            //*/
             if (self.isVisible(robot)
                 && (!this.exists(team) || robot.team === team)
-                && (!this.exists(units) || 
-                    (Array.isArray(units) && units.includes(robot.unit)
-                    || (!Array.isArray(units) && units === robot.unit)))) {
+                && (!this.exists(units) 
+                    || (Array.isArray(units) && units.includes(robot.unit)
+                        || (!Array.isArray(units) && units === robot.unit)))) {
                 robots.push(robot);
             }
         }
-        if (this.exists(robots) && robots.length) {
-            return robots.sort(this.getDistanceComparator(self.me));
+        if (robots.length) {
+            robots.sort(this.getDistanceComparator(self.me));
         }
+        return robots;
     }
 
     //returns all locations where resourceMap is true that are not in the exclusion list sorted by distance
@@ -214,17 +240,17 @@ class Nav {
         let resources = [];
         for (let col = 0; col < resourceMap.length; col++) {
             for (let row = 0; row < resourceMap[col].length; row++) {
-                let excluded = this.exists(exclusionList) && exclusionList.length && exclusionList.includes(location);
+                let loc = {x: row, y: col};
+                let excluded = this.exists(exclusionList) && exclusionList.length && exclusionList.some(test => test.x === loc.x && test.y === loc.y);
                 if (resourceMap[col][row] && !excluded) {
-                    let location = {x: row, y: col};
-                    resources.push(location);
+                    resources.push(loc);
                 }
             }
         }
         if (resources.length) {
             resources.sort(this.getDistanceComparator(self.me));
-            return resources;
         }
+        return resources;
     }
 
     //returns all karbonite sorted by distance
@@ -232,9 +258,10 @@ class Nav {
         let resourceMap = self.getKarboniteMap();
         //TODO: keep a list of locations of karbonite to exclude, add to this map when you see a worker on a karbonite
         let resources = this.getResourceLocations(self, resourceMap, exclusionList);
-        if (this.exists(resources) && resources.length) {
-            return resources.sort(this.getDistanceComparator(self.me));
+        if (resources.length) {
+            resources.sort(this.getDistanceComparator(self.me));
         }
+        return resources;
     }
 
     //returns all fuel sorted by distance
@@ -242,9 +269,10 @@ class Nav {
         let resourceMap = self.getFuelMap();
         //TODO: keep a list of locations of fuel to exclude, add to this map when you see a worker on a fuel
         let resources = this.getResourceLocations(self, resourceMap, exclusionList);
-        if (this.exists(resources) && resources.length) {
-            return resources.sort(this.getDistanceComparator(self.me));
+        if (resources.length) {
+            resources.sort(this.getDistanceComparator(self.me));
         }
+        return resources;
     }
 
     findClosestKarbonite(self, exclusionList) {
@@ -264,9 +292,7 @@ class Nav {
                 }
             }
         }
-        if (closestList.length) {
-            return closestList;
-        }
+        return closestList;
     }
 
     findClosestFuel(self, exclusionList) {

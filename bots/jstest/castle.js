@@ -18,6 +18,7 @@ var unit_counts = [];
 class Castle {
     shortTurn(self) {
         this.self = self;
+        self.log("Turn: " + self.step);
         let action;
         action = this.attackClosestEnemy();
         if (nav.exists(action)) {return action;} //return if attacking any enemy
@@ -39,13 +40,13 @@ class Castle {
     turn(self) {
         this.self = self;
         
-        this.updateUnitCounts(self);
-        if (self.step === 1) {
+        this.updateUnitCounts();
+        if (self.step == 1) {
             self.log("Castle count: " + unit_counts[SPECS.CASTLE]);
         }
         
         let action;
-        //let closestEnemyAttacker = nav.getVisibleRobots(self, enemy_team, [SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
+        //let closestEnemyAttackers = nav.getVisibleRobots(self, enemy_team, [SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
         action = this.attackClosestEnemy(SPECS.CASTLE);
         if (nav.exists(action)) {return action;} //return if attacking an enemy castle
         action = this.attackClosestEnemy(SPECS.CHURCH);
@@ -57,7 +58,7 @@ class Castle {
         
         dir = nav.getRandomValidDir(self);
         if (!nav.exists(dir)) {
-            self.log("No valid directions");
+            //self.log("No valid directions");
             return; //stop early if there are no directions to build in
         }
         
@@ -68,31 +69,31 @@ class Castle {
         if (unit_counts[SPECS.CHURCH] && nav.checkResources(self, prophet_buffer) && nav.canBuild(self, SPECS.PROPHET, dir)) {
             self.log("Building a prophet at " + loc.x + "," + loc.y);
             return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
-        } else if (self.step === 0 || (nav.checkResources(self, pilgrim_buffer) && nav.canBuild(self, SPECS.PILGRIM, dir))) {
+        } else if (self.step <= 2 || (nav.checkResources(self, pilgrim_buffer) && nav.canBuild(self, SPECS.PILGRIM, dir))) {
             self.log("Building a pilgrim at " + loc.x + "," + loc.y);
             return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
         }
     }
     
     attackClosestEnemy(units) { //attack the closest enemy with a type included the units array
-        let closestEnemyAttackers = nav.getVisibleRobots(this.self, this.self.enemy_team, units);
-        if (nav.exists(closestEnemyAttackers) && closestEnemyAttackers.length) {
-            let closest = closestEnemyAttackers[0];
-            if (nav.sqDist(this.self.me, closest) <= this.self.specs.ATTACK_RADIUS) {
+        let closestEnemies = nav.getVisibleRobots(this.self, this.self.enemy_team, units);
+        if (nav.exists(closestEnemies) && closestEnemies.length) {
+            let closest = closestEnemies[0];
+            let distance = nav.sqDist(this.self.me, closest);
+            if (distance >= this.self.specs.ATTACK_RADIUS[0] && distance <= this.self.specs.ATTACK_RADIUS[1]) {
                 let attack_offset = {x: closest.x - this.self.me.x, y: closest.y - this.self.me.y};
-                return self.attack(attack_offset.x, attack_offset.y);
+                return this.self.attack(attack_offset.x, attack_offset.y);
             }
         }
     }
     
-    updateUnitCounts(self) {
+    updateUnitCounts() {
+        unit_counts = [];
         let visibleRobots = this.self.getVisibleRobots();
-        if (self.step == 0) {
-            if (nav.exists(unit_counts[this.self.me.unit])) {
-                unit_counts[this.self.me.unit] = unit_counts[this.self.me.unit] + 1;
-            } else {
-                unit_counts[this.self.me.unit] = 1;
-            }
+        if (nav.exists(unit_counts[this.self.me.unit])) {
+            unit_counts[this.self.me.unit] = unit_counts[this.self.me.unit] + 1;
+        } else {
+            unit_counts[this.self.me.unit] = 1;
         }
         for (let i = 0; i < visibleRobots.length; i++) {
             if (!this.self.isVisible(visibleRobots[i]) || this.self.team === visibleRobots[i].team) {

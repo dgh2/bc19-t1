@@ -26,7 +26,6 @@ class MyRobot extends BCAbstractRobot {
         this.step = -1;
         this.specs;
         this.previous_time = SPECS.CHESS_INITIAL - SPECS.CHESS_EXTRA;
-        this.enemy_team;
     }
     
     _newLog(message) {
@@ -69,6 +68,8 @@ class MyRobot extends BCAbstractRobot {
         //first turn initialization
         this._unit = FUNCTION_LIST[this.me.unit].constructor.name;
         this.specs = SPECS['UNITS'][this.me.unit];
+        this.team = this.me.team;
+        this.enemy_team = (this.me.team === SPECS.RED ? SPECS.BLUE : SPECS.RED);
     }
 }
 

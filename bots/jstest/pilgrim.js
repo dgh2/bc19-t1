@@ -4,11 +4,11 @@ import nav from './nav.js';
 const CHURCH_KARBONITE = SPECS['UNITS'][SPECS.CHURCH].CONSTRUCTION_KARBONITE;
 const CHURCH_FUEL = SPECS['UNITS'][SPECS.CHURCH].CONSTRUCTION_FUEL;
 const CHURCH_COSTS = {karbonite: CHURCH_KARBONITE, fuel: CHURCH_FUEL};
-
+const BUFFER_RESOURCES = {karbonite: CHURCH_KARBONITE, fuel: CHURCH_FUEL};
+const TARGET_KARBONITE = {karbonite: 3*CHURCH_KARBONITE, fuel: 0};
+const TARGET_FUEL = {karbonite: 0, fuel: 3*CHURCH_FUEL};
 const MEMORY = 15;
-const MAX_MOVEMENT = 3**2;
 
-//var dir;
 var castles = [];
 var churches = [];
 var occupied_karbonite = [];
@@ -18,7 +18,42 @@ class Pilgrim {
     turn(self) {
         this.self = self;
         
-        //*
+        //maintain current occupied karbonite list
+        for (let i = occupied_karbonite.length - 1; i >= 0; i--) { //iterate in reverse so removing elements during iteration doesn't cause problems
+            let loc = occupied_karbonite[i];
+            let remove = false;
+            if (self.me.x === loc.x && self.me.y === loc.y) {
+                remove = true;
+            } else if (self.getVisibleRobotMap()[loc.y][loc.x] === 0) {
+                remove = true;
+            } else if (self.getVisibleRobotMap()[loc.y][loc.x] > 0) {
+                let robot = self.getRobot(self.getVisibleRobotMap()[loc.y][loc.x]);
+                if (!self.isVisible(robot) || SPECS.PILGRIM !== robot.type) {
+                    remove = true;
+                }
+            }
+            if (remove) {
+                occupied_karbonite.splice(i, 1);
+            }
+        }
+        //maintain current occupied fuel list
+        for (let i = occupied_fuel.length - 1; i >= 0; i--) { //iterate in reverse so removing elements during iteration doesn't cause problems
+            let loc = occupied_fuel[i];
+            let remove = false;
+            if (self.me.x === loc.x && self.me.y === loc.y) {
+                remove = true;
+            } else if (self.getVisibleRobotMap()[loc.y][loc.x] === 0) {
+                remove = true;
+            } else if (self.getVisibleRobotMap()[loc.y][loc.x] > 0) {
+                let robot = self.getRobot(self.getVisibleRobotMap()[loc.y][loc.x]);
+                if (!self.isVisible(robot) || SPECS.PILGRIM !== robot.type) {
+                    remove = true;
+                }
+            }
+            if (remove) {
+                occupied_fuel.splice(i, 1);
+            }
+        }
         //maintain current castles list
         for (let i = castles.length - 1; i >= 0; i--) { //iterate in reverse so removing elements during iteration doesn't cause problems
             let base = castles[i];
@@ -43,21 +78,20 @@ class Pilgrim {
         }
         
         //get enemy info
-        let enemy_team = (self.team == 0 ? 1 : 0);
-        let enemy_attackers = nav.getVisibleRobots(self, enemy_team, [SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
-        let enemy_pilgrims = nav.getVisibleRobots(self, enemy_team, SPECS.PILGRIM);
-        let enemy_castles = nav.getVisibleRobots(self, enemy_team, SPECS.CASTLE);
-        let enemy_churches = nav.getVisibleRobots(self, enemy_team, SPECS.CHURCH);
-        let enemy_bases = nav.getVisibleRobots(self, enemy_team, [SPECS.CASTLE, SPECS.CHURCH]);
+        let enemy_attackers = nav.getVisibleRobots(self, self.enemy_team, [SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
+        let enemy_pilgrims = nav.getVisibleRobots(self, self.enemy_team, SPECS.PILGRIM);
+        let enemy_castles = nav.getVisibleRobots(self, self.enemy_team, SPECS.CASTLE);
+        let enemy_churches = nav.getVisibleRobots(self, self.enemy_team, SPECS.CHURCH);
+        let enemy_bases = nav.getVisibleRobots(self, self.enemy_team, [SPECS.CASTLE, SPECS.CHURCH]);
         
         //update churches and castles lists
         let visibleBases = nav.getVisibleRobots(self, self.team, [SPECS.CASTLE, SPECS.CHURCH]);
         for (let i = 0; i < visibleBases.length; i++) {
             let base = visibleBases[i];
             let loc = {x: base.x, y: base.y};
-            if (base.unit === SPECS.CASTLE && !castles.includes(loc)) {
+            if (base.unit === SPECS.CASTLE && !castles.some(test => test.x === loc.x && test.y === loc.y)) {
                 castles.push(loc);
-            } else if (base.unit === SPECS.CHURCH && !churches.includes(loc)) {
+            } else if (base.unit === SPECS.CHURCH && !churches.some(test => test.x === loc.x && test.y === loc.y)) {
                 churches.push(loc);
             }
         }
@@ -66,11 +100,16 @@ class Pilgrim {
         let visibleObstacleRobots = nav.getVisibleRobots(self, null, [SPECS.CASTLE, SPECS.CHURCH, SPECS.PILGRIM]);
         for (let i = 0; i < visibleObstacleRobots.length; i++) {
             let robot = visibleObstacleRobots[i];
+            if (robot.x === self.me.x && robot.y === self.me.y) {
+                continue;
+            }
             let loc = {x: robot.x, y: robot.y};
-            if (self.getKarboniteMap()[loc.y][loc.x] && !occupied_karbonite.includes(loc)) {
+            if (self.getKarboniteMap()[loc.y][loc.x] && !occupied_karbonite.some(test => test.x === loc.x && test.y === loc.y)) {
                 occupied_karbonite.push(loc);
-            } else if (self.getFuelMap()[loc.y][loc.x] && !castles.includes(loc)) {
+                //self.log('Karbonite at ' + loc.x + ',' + loc.y + ' is occupied');
+            } else if (self.getFuelMap()[loc.y][loc.x] && !occupied_fuel.some(test => test.x === loc.x && test.y === loc.y)) {
                 occupied_fuel.push(loc);
+                //self.log('Fuel at ' + loc.x + ',' + loc.y + ' is occupied');
             }
         }
         
@@ -88,7 +127,6 @@ class Pilgrim {
             base_distance = nav.sqDist(self.me, base);
             base_direction = nav.getDir(self.me, base);
         }
-        
         
         if (nav.exists(base) && self.getVisibleRobotMap()[base.y][base.x] === 0) {
             base = null; //the base died
@@ -112,45 +150,125 @@ class Pilgrim {
                                             || (team fuel < church_fuel && team fuel + carried fuel - deposit_fuel_cost >= church_fuel)
         set should_deposit = should_deposit_karbonite || should_deposit_fuel
         */
-        let should_deposit_karbonite = self.karbonite < 2*CHURCH_KARBONITE || self.me.karbonite >= self.specs.KARBONITE_CAPACITY;
-        let should_deposit_fuel = self.karbonite < 2*CHURCH_FUEL || self.me.fuel >= self.specs.FUEL_CAPACITY;
-        let should_deposit = should_deposit_karbonite || should_deposit_fuel;
-        if (nav.exists(base) && should_deposit) {
-            let action;
-            action = this.deposit(base);
-            if (nav.exists(action)) {return action;} //return if depositing
-            
-            if (base_distance < MAX_MOVEMENT) {
-                let deposit_moves = Math.ceil((base_distance - 1) / MAX_MOVEMENT);
-                let turns_not_mining = 1 + (2 * deposit_moves);
-                let deposit_fuel_cost = ((base_distance*self.specs.FUEL_PER_MOVE)+((SPECS.FUEL_YIELD - SPECS.MINE_FUEL_COST)*turns_not_mining));
-                //let deposit_karbonite_cost = SPECS.KARBONITE_YIELD*turns_not_mining;
-                action = this.moveToward(base, deposit_fuel_cost / turns_not_mining);
-                if (nav.exists(action)) {return action;} //return if moving toward base
-            }
-            
-            if (nav.checkResources(self, CHURCH_COSTS)) {
-                let dir = nav.getRandomValidDir(self);
-                if (nav.exists(dir)) {
-                    return self.buildUnit(SPECS.CHURCH, dir);
-                }
-            }
-            
-            action = this.moveToward(base, self.specs.FUEL_PER_MOVE);
-            if (nav.exists(action)) {return action;} //return if moving toward base
-        }
-        
         let karbonite_full = self.me.karbonite >= self.specs.KARBONITE_CAPACITY;
         let fuel_full = self.me.fuel >= self.specs.FUEL_CAPACITY;
-        let target_karbonite = !karbonite_full && (self.karbonite < 3*CHURCH_KARBONITE || self.karbonite <= self.fuel);
-        let target_fuel = !fuel_full && (self.fuel < 3*CHURCH_FUEL || self.fuel < self.karbonite);
-        if (target_karbonite) {
-            action = this.moveToward(base, self.specs.FUEL_PER_MOVE);
-            if (nav.exists(action)) {return action;} //return if moving toward base
+        let karbonite_low = self.karbonite < BUFFER_RESOURCES.karbonite;
+        let fuel_low = self.fuel < BUFFER_RESOURCES.fuel;
+        let should_deposit_karbonite = karbonite_full || (karbonite_low && self.karbonite + self.me.karbonite >= BUFFER_RESOURCES.karbonite);
+        let should_deposit_fuel = fuel_full || (fuel_low && self.fuel + self.me.fuel >= BUFFER_RESOURCES.fuel);
+        let should_deposit = should_deposit_karbonite || should_deposit_fuel;
+        let on_karbonite = self.getKarboniteMap()[self.me.y][self.me.x];
+        let on_fuel = self.getFuelMap()[self.me.y][self.me.x];
+        let on_resource = on_karbonite || on_fuel;
+        let action;
+        if (should_deposit) {
+            if (nav.exists(base)) {
+                action = this.deposit(base);
+                if (nav.exists(action)) {return action;} //return if depositing
+                
+                if (base_distance + 1 < self.specs.SPEED) {
+                    let deposit_moves = Math.ceil((base_distance - 1) / self.specs.SPEED);
+                    let turns_not_mining = 1 + (2 * deposit_moves);
+                    let deposit_fuel_cost = ((base_distance*self.specs.FUEL_PER_MOVE)+((SPECS.FUEL_YIELD - SPECS.MINE_FUEL_COST)*turns_not_mining));
+                    //let deposit_karbonite_cost = SPECS.KARBONITE_YIELD*turns_not_mining;
+                    
+                    action = this.moveToward(base, deposit_fuel_cost / turns_not_mining);
+                    if (nav.exists(action)) {
+                        //self.log('Moving ' + nav.toCompassDir(nav.getDir(self.me, base)) + ' toward base at (' + base.x + ',' + base.y + ')');
+                        return action; //return if moving toward base
+                    }
+                }
+            
+                if (on_resource && nav.checkResources(self, CHURCH_COSTS)) {
+                    action = this.buildChurch();
+                    if (nav.exists(action)) {return action;} //return if building a church
+                }
+            
+                action = this.moveToward(base, 2*self.specs.FUEL_PER_MOVE);
+                if (nav.exists(action)) {
+                    //self.log('Slowly moving ' + nav.toCompassDir(nav.getDir(self.me, base)) + ' toward base at (' + base.x + ',' + base.y + ')');
+                    return action; //return if moving toward base
+                }
+            } else if (on_resource && nav.checkResources(self, CHURCH_COSTS)) {
+                action = this.buildChurch();
+                if (nav.exists(action)) {return action;} //return if building a church
+            }
         }
-        if (target_fuel) {
-            action = this.moveToward(base, self.specs.FUEL_PER_MOVE);
-            if (nav.exists(action)) {return action;} //return if moving toward base
+        
+        let karbonites = nav.getKarboniteLocations(self, occupied_karbonite);
+        let fuels = nav.getFuelLocations(self, occupied_fuel);
+        let closest_resource;
+        let closest_karbonite;
+        if (!karbonite_full && karbonites.length) {
+            closest_karbonite = karbonites[0];
+            closest_resource = closest_karbonite;
+        }
+        let closest_fuel;
+        if (!fuel_full && fuels.length) {
+            closest_fuel = fuels[0];
+            if (!nav.exists(closest_resource) || nav.sqDist(self.me, closest_fuel) < nav.sqDist(self.me, closest_resource)) {
+                closest_resource = closest_fuel;
+            }
+        }
+        
+        if (nav.exists(closest_resource)) {
+            let dist = nav.sqDist(self.me, closest_resource);
+            if (dist === 0) {
+                if (closest_resource === closest_karbonite && self.me.karbonite === 0) {
+                    //self.log('Mining karbonite! Carrying: ' + (self.me.karbonite + SPECS.KARBONITE_YIELD) + '/' + self.specs.KARBONITE_CAPACITY);
+                    self.log('Mining karbonite!');
+                } else if (closest_resource === closest_fuel && self.me.fuel === 0) {
+                    //self.log('Mining fuel! Carrying: ' + (self.me.fuel + SPECS.FUEL_YIELD) + '/' + self.specs.FUEL_CAPACITY);
+                    self.log('Mining fuel!');
+                }
+                return self.mine();
+            }
+            action = this.moveToward(closest_resource, self.specs.SPEED * self.specs.FUEL_PER_MOVE);
+            if (nav.exists(action)) {
+                //let dir = nav.toCompassDir(nav.getDir(self.me, closest_resource));
+                //let resource_type = (closest_resource === closest_karbonite ? 'karbonite' : 'fuel');
+                //self.log('Moving ' + dir + ' toward ' + resource_type + ' at (' + closest_resource.x + ',' + closest_resource.y + ')');
+                return action; //return if moving toward a resource
+            }
+        }
+        
+        /*
+        let target_karbonite = !karbonite_full && (!nav.checkResources(self, TARGET_KARBONITE) || self.karbonite <= self.fuel);
+        let target_fuel = !fuel_full && (!nav.checkResources(self, TARGET_FUEL) || self.fuel <= self.karbonite);
+        let karbonites = nav.getKarboniteLocations(self, occupied_karbonite);
+        let fuels = nav.getFuelLocations(self, occupied_fuel);
+        let closest_karbonite;
+        if (target_karbonite && karbonites.length) {
+            closest_karbonite = karbonites[0];
+        }
+        let closest_fuel;
+        if (target_fuel && fuels.length) {
+            closest_fuel = fuels[0];
+        }
+        let skip_karbonite = nav.exists(closest_karbonite) && nav.exists(closest_fuel) && nav.sqDist(self.me, closest_fuel) > nav.sqDist(self.me, closest_karbonite);
+        if (target_karbonite && karbonites.length && !skip_karbonite) {
+            let target = karbonites[0];
+            if (nav.sqDist(self.me, target) === 0) {
+                self.log('Mining karbonite! Carrying: ' + (self.me.karbonite + SPECS.KARBONITE_YIELD) + '/' + self.specs.KARBONITE_CAPACITY);
+                return self.mine();
+            }
+            action = this.moveToward(target, 2*self.specs.FUEL_PER_MOVE);
+            if (nav.exists(action)) {
+                self.log('Moving ' + nav.toCompassDir(nav.getDir(self.me, target)) + ' toward karbonite at (' + target.x + ',' + target.y + ')');
+                return action; //return if moving toward karbonite
+            }
+        }
+        if (target_fuel && fuels.length) {
+            let target = fuels[0];
+            if (nav.sqDist(self.me, target) === 0) {
+                self.log('Mining fuel! Carrying: ' + (self.me.fuel + SPECS.FUEL_YIELD) + '/' + self.specs.FUEL_CAPACITY);
+                return self.mine();
+            }
+            action = this.moveToward(target, 2*self.specs.FUEL_PER_MOVE);
+            if (nav.exists(action)) {
+                self.log('Moving ' + nav.toCompassDir(nav.getDir(self.me, target)) + ' toward fuel at (' + target.x + ',' + target.y + ')');
+                return action; //return if moving toward fuel
+            }
         }
         //*/
         
@@ -194,8 +312,8 @@ class Pilgrim {
         let has_base = false;
         let at_base = false;
         let near_base = false;
-        let lacking_karbonite = !nav.checkResources(self, 2*church_karbonite, 0);
-        let lacking_fuel = !nav.checkResources(self, 0, 2*church_fuel);
+        let lacking_karbonite = !nav.checkResources(self, BUFFER_RESOURCES.karbonite, 0);
+        let lacking_fuel = !nav.checkResources(self, 0, BUFFER_RESOURCES.fuel);
         
         if (nav.exists(closestBases) && closestBases.length) {
             has_base = true;
@@ -323,25 +441,70 @@ class Pilgrim {
     
     deposit(base) {
         let me = this.self.me;
-        if (nav.exists(base) && (me.karbonite || me.fuel) && nav.sqDir(me, base) < 2**2) {
-            let give_report = me.karbonite + " karbonite and " + me.fuel + " fuel";
+        if (nav.exists(base) && (me.karbonite || me.fuel) && nav.sqDist(me, base) < 2**2) {
+            let give_report = "Depositing ";
+            if (me.karbonite && me.fuel) {
+                give_report += me.karbonite + " karbonite and " + me.fuel + " fuel";
+            } else if (me.karbonite) {
+                give_report += me.karbonite + " karbonite";
+            } else {
+                give_report += me.fuel + " fuel";
+            }
             let resource_report = (this.self.karbonite + me.karbonite) + " karbonite and " + (this.self.fuel + me.fuel) + " fuel";
             let base_dir = nav.getDir(me, base);
-            this.self.log("Giving " + give_report + " to the " + nav.toCompassDir(base_dir) + ". " + "Total resources: " + resource_report);
+            //this.self.log(give_report + " to the " + nav.toCompassDir(base_dir) + ". " + "Total resources: " + resource_report);
+            this.self.log(give_report + ". " + "Total resources: " + resource_report);
             return this.self.give(base_dir.x, base_dir.y, me.karbonite, me.fuel);
         }
     }
     
-    moveToward(loc, max_fuel) {
-        //TODO: jump to farthest location costing less than max_fuel
-        let rotation = this.self.me.team ? 1 : -1;
-        let dir = nav.getDir(this.self.me, loc);
-        for (let i = 0; i < 8; i++) {
-            if (nav.isPassable(this.self, nav.applyDir(this.self.me, dir))) {
-                return this.self.move(dir.x, dir.y);
-            }
-            dir = nav.rotate(dir, rotation);
+    buildChurch() {
+        let dir = nav.getRandomValidDir(this.self);
+        if (nav.exists(dir) && nav.canBuild(this.self, SPECS.CHURCH, dir)) {
+            this.self.log('Building church to the ' + nav.toCompassDir(dir));
+            return this.self.buildUnit(SPECS.CHURCH, dir.x, dir.y);
         }
+    }
+    
+    moveToward(loc, max_fuel = this.self.specs.SPEED * SPECS.FUEL_PER_MOVE) {
+        //TODO: jump to farthest location costing less than max_fuel
+        let movement_locations = this.calculateMovementLocations(Math.max(this.self.fuel, max_fuel));
+        if (movement_locations.length) {
+            movement_locations.sort(nav.getDistanceComparator(loc));
+            return this.self.move(movement_locations[0].x - this.self.me.x, movement_locations[0].y - this.self.me.y);
+        }
+    }
+    
+    calculateMovementLocations(max_fuel = this.self.specs.SPEED * SPECS.FUEL_PER_MOVE) {
+        //this.self.log('calling calculateMovementLocations with max_fuel: ' + max_fuel);
+        let movement_locations = [];
+        let locations = this.calculateLocationsWithinRadius(this.self.me, Math.min(this.self.specs.SPEED, max_fuel / this.self.specs.FUEL_PER_MOVE));
+        for (let i = 0; i < locations.length; i++) {
+            let {x, y} = locations[i];
+            //this.self.log('calculated location: ' + x + ',' + y);
+            if (this.self.getVisibleRobotMap()[y][x] > -1 && nav.isPassable(this.self, locations[i])) {
+                movement_locations.push(locations[i]);
+            }
+        }
+        //this.self.log('movement locations from ' + this.self.me.x + ',' + this.self.me.y + ' costing less than ' + max_fuel + ' fuel:');
+        return movement_locations;
+    }
+    
+    calculateLocationsWithinRadius(from = this.self.me, radius = this.self.specs.SPEED) { //inclusive on radius
+        //this.self.log('calling calculateMovementLocations with from: ' + from.x + ',' + from.y + ' and radius: ' + radius);
+        let locations = [];
+        if (radius > 0) {
+            for (let col = 0; col < this.self.getPassableMap().length; col++) {
+                for (let row = 0; row < this.self.getPassableMap()[col].length; row++) {
+                    let test = {x: row, y: col};
+                    //this.self.log('testing location: ' + test.x + ',' + test.y);
+                    if (this.self.getPassableMap()[col][row] && nav.sqDist(from, test) <= radius) {
+                        locations.push(test);
+                    }
+                }
+            }
+        }
+        return locations;
     }
 }
 
