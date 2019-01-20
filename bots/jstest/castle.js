@@ -23,7 +23,7 @@ class Castle {
         action = this.attackClosestEnemy();
         if (nav.exists(action)) {return action;} //return if attacking any enemy
         
-        dir = nav.getRandomValidDir(self);
+        dir = nav.getRandomValidDir(self, self.karbonite >= self.fuel, self.fuel > self.karbonite);
         if (!nav.exists(dir)) {
             self.log("No valid directions");
             return; //stop early if there are no directions to build in
@@ -45,6 +45,9 @@ class Castle {
             self.log("Castle count: " + unit_counts[SPECS.CASTLE]);
         }
         
+        let prophet_buffer = {karbonite: 2*CHURCH_KARBONITE + PROPHET_KARBONITE, fuel: 2*CHURCH_FUEL + PROPHET_FUEL};
+        let pilgrim_buffer = {karbonite: 2*CHURCH_KARBONITE + PILGRIM_KARBONITE, fuel: 2*CHURCH_FUEL + PILGRIM_FUEL};
+        
         let action;
         //let closestEnemyAttackers = nav.getVisibleRobots(self, enemy_team, [SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
         action = this.attackClosestEnemy(SPECS.CASTLE);
@@ -56,14 +59,15 @@ class Castle {
         action = this.attackClosestEnemy();
         if (nav.exists(action)) {return action;} //return if attacking any enemy
         
-        dir = nav.getRandomValidDir(self);
+        if (unit_counts[SPECS.CHURCH] && nav.checkResources(self, prophet_buffer)) {
+            dir = nav.getRandomValidDir(self, true);
+        } else {
+            dir = nav.getRandomValidDir(self, false, self.karbonite >= self.fuel, self.fuel > self.karbonite);
+        }
         if (!nav.exists(dir)) {
             //self.log("No valid directions");
             return; //stop early if there are no directions to build in
         }
-        
-        let prophet_buffer = {karbonite: 2*CHURCH_KARBONITE + PROPHET_KARBONITE, fuel: 2*CHURCH_FUEL + PROPHET_FUEL};
-        let pilgrim_buffer = {karbonite: 2*CHURCH_KARBONITE + PILGRIM_KARBONITE, fuel: 2*CHURCH_FUEL + PILGRIM_FUEL};
         
         let loc = nav.applyDir(self.me, dir);
         if (unit_counts[SPECS.CHURCH] && nav.checkResources(self, prophet_buffer) && nav.canBuild(self, SPECS.PROPHET, dir)) {

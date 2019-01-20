@@ -54,7 +54,7 @@ class Nav {
         return this.toDir(this.getRandomCompassDir());
     }
 
-    getRandomValidDir(self) {
+    getRandomValidDir(self, avoid_resources = true, prefer_karbonite = true, prefer_fuel = false) {
         let choice;
         let randomCompassDirs = this.getRandomCompassDirs();
         for (let i = 0; i < randomCompassDirs.length; i++) {
@@ -69,10 +69,14 @@ class Nav {
             let loc = this.applyDir(self.me, random_dir);
             if (this.isPassable(self, loc)) {
                 return random_dir;
-            
+                
                 let random_dir_karbonite = self.getKarboniteMap()[loc.y][loc.x];
                 let random_dir_fuel = self.getFuelMap()[loc.y][loc.x];
-                if (!random_dir_karbonite && !random_dir_fuel) {
+                if (avoid_resources && !random_dir_karbonite && !random_dir_fuel) {
+                    return random_dir;
+                } else if (!avoid_resources && prefer_karbonite && random_dir_karbonite) {
+                    return random_dir;
+                } else if (!avoid_resources && prefer_fuel && random_dir_fuel) {
                     return random_dir;
                 }
                 
@@ -82,8 +86,10 @@ class Nav {
                     let choice_loc = this.applyDir(self.me, choice);
                     let choice_karbonite = self.getKarboniteMap()[choice_loc.y][choice_loc.x];
                     let choice_fuel = self.getFuelMap()[choice_loc.y][choice_loc.x];
-                    let overwrite_karbonite = choice_karbonite && !random_dir_karbonite;
-                    let overwrite_fuel = choice_fuel && !random_dir_fuel && !random_dir_karbonite;
+                    let overwrite_karbonite = (avoid_resources && choice_karbonite && !random_dir_karbonite) 
+                                                  || (!avoid_resources && prefer_karbonite && !choice_karbonite && random_dir_karbonite);
+                    let overwrite_fuel = (avoid_resources && choice_fuel && !random_dir_fuel) 
+                                              || (!avoid_resources && prefer_fuel && !choice_fuel && random_dir_fuel);
                     if (overwrite_karbonite || overwrite_fuel) {
                         choice = random_dir;
                     }

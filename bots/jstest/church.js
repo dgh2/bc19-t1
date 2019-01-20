@@ -25,7 +25,11 @@ class Church {
         
         let need_pilgrim = !nav.checkResources(self, {karbonite: 0, fuel: 3*church_fuel}) || !nav.checkResources(self, {karbonite: 3*church_karbonite, fuel: 0});
         
-        dir = nav.getRandomValidDir(self);
+        if (need_pilgrim && nav.checkResources(self, pilgrim_resources)) {
+            dir = nav.getRandomValidDir(self, self.karbonite >= self.fuel, self.fuel > self.karbonite);
+        } else {
+            dir = nav.getRandomValidDir(self, true);
+        }
         if (!nav.exists(dir)) {
             self.log("No valid directions");
             return;
