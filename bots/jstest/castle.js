@@ -18,31 +18,32 @@ var unit_counts = [];
 class Castle {
     shortTurn(self) {
         this.self = self;
-        self.log("Turn: " + self.step);
+        self.log('Turn: ' + self.step);
         let action;
         action = this.attackClosestEnemy();
         if (nav.exists(action)) {return action;} //return if attacking any enemy
         
         dir = nav.getRandomValidDir(self, self.karbonite >= self.fuel, self.fuel > self.karbonite);
         if (!nav.exists(dir)) {
-            self.log("No valid directions");
+            self.log('No valid directions');
             return; //stop early if there are no directions to build in
         }
         
         //TODO: if a visible resource is unoccupied and we have enough resources to build a pilgrim and a church, build a pilgrim
         let pilgrim_buffer = {karbonite: 2*CHURCH_KARBONITE + PILGRIM_KARBONITE, fuel: 2*CHURCH_FUEL + PILGRIM_FUEL};
         if (nav.checkResources(self, pilgrim_buffer) && nav.canBuild(self, SPECS.PILGRIM, dir)) {
-            self.log("Building a pilgrim at " + loc.x + "," + loc.y);
+            self.log('Building a pilgrim at ' + loc.x + ',' + loc.y);
             return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
         }
     }
     
     turn(self) {
         this.self = self;
+        self.log('Turn: ' + self.step);
         
         this.updateUnitCounts();
         if (self.step == 1) {
-            self.log("Castle count: " + unit_counts[SPECS.CASTLE]);
+            self.log('Castle count: ' + unit_counts[SPECS.CASTLE]);
         }
         
         let prophet_buffer = {karbonite: 2*CHURCH_KARBONITE + PROPHET_KARBONITE, fuel: 2*CHURCH_FUEL + PROPHET_FUEL};
@@ -65,16 +66,16 @@ class Castle {
             dir = nav.getRandomValidDir(self, false, self.karbonite >= self.fuel, self.fuel > self.karbonite);
         }
         if (!nav.exists(dir)) {
-            //self.log("No valid directions");
+            //self.log('No valid directions');
             return; //stop early if there are no directions to build in
         }
         
         let loc = nav.applyDir(self.me, dir);
         if (unit_counts[SPECS.CHURCH] && nav.checkResources(self, prophet_buffer) && nav.canBuild(self, SPECS.PROPHET, dir)) {
-            self.log("Building a prophet at " + loc.x + "," + loc.y);
+            self.log('Building a prophet at ' + loc.x + ',' + loc.y);
             return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
         } else if (self.step <= 2 || (nav.checkResources(self, pilgrim_buffer) && nav.canBuild(self, SPECS.PILGRIM, dir))) {
-            self.log("Building a pilgrim at " + loc.x + "," + loc.y);
+            self.log('Building a pilgrim at ' + loc.x + ',' + loc.y);
             return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
         }
     }

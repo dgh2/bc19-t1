@@ -19,7 +19,7 @@ class MyRobot extends BCAbstractRobot {
         this._slave; //names beginning with _ are known to not be intended for use elsewhere
         this._log = this.log; //backup original self.log at self._log
         this.log = this._newLog; //replace self.log calls with self._newLog calls
-        this._unit = "";
+        this._unit = '';
         
         //These are now available in 'this' in the MyRobot class and 'self' in the unit classes
         this.self = this;
@@ -30,8 +30,8 @@ class MyRobot extends BCAbstractRobot {
     
     _newLog(message) {
         if (!SUPPRESS_LOGS) {
-            let loc = "(" + this.me.x + "," + this.me.y + ")";
-            let prefix = this._unit + " " + loc + ": ";
+            let loc = '(' + this.me.x + ',' + this.me.y + ')';
+            let prefix = this._unit + ' ' + loc + ': ';
             this._log(prefix + message); //call back to original self.log
         }
     }
@@ -67,7 +67,7 @@ class MyRobot extends BCAbstractRobot {
     initialize() {
         //first turn initialization
         this._unit = FUNCTION_LIST[this.me.unit].constructor.name;
-        this.specs = SPECS['UNITS'][this.me.unit];
+        this.specs = SPECS.UNITS[this.me.unit];
         this.team = this.me.team;
         this.enemy_team = (this.me.team === SPECS.RED ? SPECS.BLUE : SPECS.RED);
     }

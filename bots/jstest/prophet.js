@@ -7,35 +7,69 @@ class Prophet {
     turn(self) {
         this.self = self;
         
-        let prophet_wall = 1;
+        let closestEnemyAttackers = nav.getVisibleRobots(self, self.enemy_team, [SPECS.CASTLE, SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
+        let closestEnemyPilgrims = nav.getVisibleRobots(self, self.enemy_team, SPECS.PILGRIM);
+        let closestEnemyChurches = nav.getVisibleRobots(self, self.enemy_team, SPECS.CHURCH);
         
         let action;
         action = this.attackClosestEnemy(SPECS.CASTLE);
-        if (nav.exists(action)) {return action;} //return if attacking an enemy castle
-        action = this.attackClosestEnemy(SPECS.CHURCH);
-        if (nav.exists(action)) {return action;} //return if attacking an enemy church
+        if (nav.exists(action)) {return action;} //return if attacking a castle
         action = this.attackClosestEnemy(SPECS.PREACHER);
         if (nav.exists(action)) {return action;} //return if attacking a preacher
         action = this.attackClosestEnemy(SPECS.PROPHET);
         if (nav.exists(action)) {return action;} //return if attacking a prophet
         action = this.attackClosestEnemy(SPECS.CRUSADER);
         if (nav.exists(action)) {return action;} //return if attacking a crusader
+        action = this.attackClosestEnemy(SPECS.PILGRIM);
+        if (nav.exists(action)) {return action;} //return if attacking a pilgrim
+        action = this.attackClosestEnemy(SPECS.CHURCH);
+        if (nav.exists(action)) {return action;} //return if attacking a church
         action = this.attackClosestEnemy();
         if (nav.exists(action)) {return action;} //return if attacking any enemy
         
-        let closest_bases = nav.getVisibleRobots(self, self.team, SPECS.CASTLE);
-        if (nav.exists(closest_bases) && closest_bases.length) {
-            if (self.step === 0) {
-                dir = nav.getDir(self.me, closest_bases[0]); //get direction toward from closest base
-                if (nav.exists(dir)) {
-                    dir = nav.rotate(dir, 4); //get opposite direction
-                }
-            }
-            let dist = nav.sqDist(self.me, closest_bases[0]);
-            if (dist < prophet_wall && self.fuel >= self.specs.FUEL_PER_MOVE) {
-                return self.move(dir.x, dir.y); //step in direction
+        let closest_castles = nav.getVisibleRobots(self, self.team, SPECS.CASTLE);
+        if (nav.exists(closest_castles) && closest_castles.length) {
+            let dist = nav.sqDist(self.me, closest_castles[0]);
+            if (dist < 2**2) {
+                return; //stand guard over castle
             }
         }
+        
+        if (nav.exists(closestEnemyAttackers) && closestEnemyAttackers.length) {
+            let closest = closestEnemyAttackers[0];
+            let dist = nav.sqDist(self.me, closest);
+            let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
+            //self.log('closestEnemyAttacker: ' + closest.x + ',' + closest.y + ' is ' + dist + ' to the ' + compassDir);
+            //if () {
+                //TODO: kite, if enemy can attack us and we can leave their attack range in one move, do so
+                //TODO: for prophets, try to move inside their attack radius
+            //} else {
+            if (dist + 2**2 > SPECS.UNITS[closest.unit].ATTACK_RADIUS[1]) {
+                self.log('Moving toward closest enemy attacker: ' + closest.x + ',' + closest.y + ' to the ' + compassDir);
+                let attack_offset = {x: closest.x - self.me.x, y: closest.y - self.me.y};
+                dir = nav.getDir(self.me, closest);
+            } else {
+                self.log('Waiting for enemy at ' + closest.x + ',' + closest.y + ' to the ' + compassDir + ' to come closer');
+                return;
+            }
+        }
+        
+        //TODO: follow closest friendly pilgrim ! on a resource and not near a church or castle
+        //TODO: follow closest friendly preacher
+        //TODO: follow closest friendly crusader
+        //TODO: delete the code below and move away from castles and churches to prevent blocking units
+        
+        if (nav.exists(dir) && !nav.isPassable(self, nav.applyDir(self.me, dir))) {
+            dir = null;
+        }
+        //anything else that might set dir
+        if (!nav.exists(dir)) {
+            dir = nav.getRandomValidDir(self);
+        }
+        if (nav.exists(dir) && self.fuel >= self.specs.FUEL_PER_MOVE) {
+            return self.move(dir.x, dir.y);
+        }
+        self.log('No valid dirs');
     }
     
     attackClosestEnemy(units) { //attack the closest enemy with a type included the units array

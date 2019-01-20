@@ -31,23 +31,26 @@ class Church {
             dir = nav.getRandomValidDir(self, true);
         }
         if (!nav.exists(dir)) {
-            self.log("No valid directions");
+            self.log('No valid directions');
             return;
         }
         
         let loc = nav.applyDir(self.me, dir);
         if (need_pilgrim && nav.checkResources(self, pilgrim_resources) && nav.canBuild(self, SPECS.PILGRIM, dir)) {
-            self.log("Building a pilgrim at " + loc.x + "," + loc.y);
+            self.log('Building a pilgrim at ' + loc.x + ',' + loc.y);
             return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
-        } else if (self.step % 3 === 0 && nav.checkResources(self, crusader_resources) && nav.canBuild(self, SPECS.CRUSADER, dir)) {
-            self.log("Building a crusader at " + loc.x + "," + loc.y);
+        } else if (self.step % 3 === 0 && nav.checkResources(self, prophet_resources) && nav.canBuild(self, SPECS.PROPHET, dir)) {
+            self.log('Building a prophet at ' + loc.x + ',' + loc.y);
+            return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
+        } else if (self.step % 5 === 0 && nav.checkResources(self, crusader_resources) && nav.canBuild(self, SPECS.CRUSADER, dir)) {
+            self.log('Building a crusader at ' + loc.x + ',' + loc.y);
             return self.buildUnit(SPECS.CRUSADER, dir.x, dir.y);
-        } else if (self.step % 5 === 0 && nav.checkResources(self, preacher_resources) && nav.canBuild(self, SPECS.PREACHER, dir)) {
-            self.log("Building a preacher at " + loc.x + "," + loc.y);
+        } else if (self.step % 7 === 0 && nav.checkResources(self, preacher_resources) && nav.canBuild(self, SPECS.PREACHER, dir)) {
+            self.log('Building a preacher at ' + loc.x + ',' + loc.y);
             return self.buildUnit(SPECS.PREACHER, dir.x, dir.y);
         }
         /*else if (self.step % 2 === 0 && nav.checkResources(self, prophet_resources) && nav.canBuild(self, SPECS.PROPHET, dir)) {
-            self.log("Building a prophet at " + loc.x + "," + loc.y);
+            self.log('Building a prophet at ' + loc.x + ',' + loc.y);
             return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
         }*/
     }
