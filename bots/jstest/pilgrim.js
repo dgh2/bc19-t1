@@ -206,7 +206,7 @@ class Pilgrim {
         let closest_fuel;
         if (!fuel_full && fuels.length) {
             closest_fuel = fuels[0];
-            if (!nav.exists(closest_resource) || nav.sqDist(self.me, closest_fuel) < nav.sqDist(self.me, closest_resource)) {
+            if (!nav.exists(closest_resource) || (self.fuel < self.karbonite && nav.sqDist(self.me, closest_fuel) < nav.sqDist(self.me, closest_resource))) {
                 closest_resource = closest_fuel;
             }
         }

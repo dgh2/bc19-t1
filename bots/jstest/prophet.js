@@ -32,7 +32,7 @@ class Prophet {
                 }
             }
             let dist = nav.sqDist(self.me, closest_bases[0]);
-            if (dist < prophet_wall) {
+            if (dist < prophet_wall && self.fuel >= self.specs.FUEL_PER_MOVE) {
                 return self.move(dir.x, dir.y); //step in direction
             }
         }

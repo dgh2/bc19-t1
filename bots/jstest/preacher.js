@@ -77,7 +77,7 @@ class Preacher {
         if (!nav.exists(dir)) {
             dir = nav.getRandomValidDir(self);
         }
-        if (nav.exists(dir)) {
+        if (nav.exists(dir) && self.fuel >= self.specs.FUEL_PER_MOVE) {
             return self.move(dir.x, dir.y);
         }
         self.log("No valid dirs");
