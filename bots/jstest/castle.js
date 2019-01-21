@@ -57,6 +57,7 @@ class Castle {
         let pilgrim_buffer = {karbonite: CHURCH_KARBONITE + PILGRIM_KARBONITE, fuel: CHURCH_FUEL + PILGRIM_FUEL};
         
         let closestEnemyAttackers = nav.getVisibleRobots(self, self.enemy_team, [SPECS.CASTLE, SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
+        let closestPassiveEnemies = nav.getVisibleRobots(self, self.enemy_team, [SPECS.PILGRIM, SPECS.CHURCH]);
         let myVisiblePilgrims = nav.getVisibleRobots(self, self.team, SPECS.PILGRIM);
         let myVisiblePreachers = nav.getVisibleRobots(self, self.team, SPECS.PREACHER);
         let myVisibleProphets = nav.getVisibleRobots(self, self.team, SPECS.PROPHET);
@@ -75,10 +76,13 @@ class Castle {
         if (nav.exists(action)) {return action;} //return if attacking any enemy
         
         let excess_pilgrims = myVisiblePilgrims.length - visibleResources.length;
-        let need_crusader = nav.checkResources(self, CRUSADER_COSTS) && self.step >= 950;
-        let need_prophet = nav.checkResources(self, prophet_buffer) 
-                              && (closestEnemyAttackers.length || unit_counts[SPECS.CHURCH] > 4 || (unit_counts[SPECS.CHURCH] > 0 && myVisibleProphets.length < 2));
+        let low_prophets = unit_counts[SPECS.CHURCH] > 4 
+                              || (unit_counts[SPECS.CHURCH] > 0 && myVisibleProphets.length < 2) 
+                              || closestPassiveEnemies.length > 2*myVisibleProphets.length
+                              || closestEnemyAttackers.length > 2*myVisibleProphets.length;
+        let need_prophet = nav.checkResources(self, prophet_buffer) && low_prophets;
         let need_pilgrim = nav.checkResources(self, pilgrim_buffer) && (excess_pilgrims < myVisiblePreachers.length);
+        let need_crusader = nav.checkResources(self, CRUSADER_COSTS) && self.step >= 950;
         /*
         self.log('excess_pilgrims: ' + excess_pilgrims);
         self.log('need_prophet: ' + need_prophet);

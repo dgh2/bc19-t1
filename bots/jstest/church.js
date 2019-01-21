@@ -18,12 +18,13 @@ class Church {
         let preacher_karbonite = SPECS['UNITS'][SPECS.PREACHER].CONSTRUCTION_KARBONITE;
         let preacher_fuel = SPECS['UNITS'][SPECS.PREACHER].CONSTRUCTION_FUEL;
         
-        let pilgrim_buffer = {karbonite: 3*church_karbonite + pilgrim_karbonite, fuel: 3*church_fuel + pilgrim_fuel};
-        let crusader_buffer = {karbonite: 3*church_karbonite + crusader_karbonite, fuel: 3*church_fuel + crusader_fuel};
-        let prophet_buffer = {karbonite: 3*church_karbonite + prophet_karbonite, fuel: 3*church_fuel + prophet_fuel};
-        let preacher_buffer = {karbonite: 3*church_karbonite + preacher_karbonite, fuel: 3*church_fuel + preacher_fuel};
+        let pilgrim_buffer = {karbonite: 2*church_karbonite + pilgrim_karbonite, fuel: 2*church_fuel + pilgrim_fuel};
+        let crusader_buffer = {karbonite: 2*church_karbonite + crusader_karbonite, fuel: 2*church_fuel + crusader_fuel};
+        let prophet_buffer = {karbonite: 2*church_karbonite + prophet_karbonite, fuel: 2*church_fuel + prophet_fuel};
+        let preacher_buffer = {karbonite: 2*church_karbonite + preacher_karbonite, fuel: 2*church_fuel + preacher_fuel};
         
         let closestEnemyAttackers = nav.getVisibleRobots(self, self.enemy_team, [SPECS.CASTLE, SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
+        let closestPassiveEnemies = nav.getVisibleRobots(self, self.enemy_team, [SPECS.PILGRIM, SPECS.CHURCH]);
         let myVisiblePilgrims = nav.getVisibleRobots(self, self.team, SPECS.PILGRIM);
         let myVisiblePreachers = nav.getVisibleRobots(self, self.team, SPECS.PREACHER);
         let myVisibleProphets = nav.getVisibleRobots(self, self.team, SPECS.PROPHET);
@@ -32,10 +33,13 @@ class Church {
         visibleResources = visibleResources.concat(nav.getResourceLocations(self, self.getFuelMap(), null, self.specs.VISION_RADIUS));
         
         let excess_pilgrims = myVisiblePilgrims.length - visibleResources.length;
-        let need_prophet = nav.checkResources(self, prophet_buffer) && (closestEnemyAttackers.length || myVisibleProphets.length < myVisiblePreachers.length);
+        let low_prophets = myVisibleProphets.length < myVisiblePreachers.length
+                              || closestPassiveEnemies.length > 2*myVisibleProphets.length
+                              || closestEnemyAttackers.length > 2*myVisibleProphets.length;
+        let need_prophet = nav.checkResources(self, prophet_buffer) && low_prophets;
         let need_pilgrim = nav.checkResources(self, pilgrim_buffer) && (excess_pilgrims < myVisiblePreachers.length);
         let need_crusader = nav.checkResources(self, crusader_buffer) && (self.step >= 900 || myVisibleCrusaders.length < myVisiblePreachers.length);
-        let need_preacher = !need_prophet && !need_pilgrim && !need_crusader && nav.checkResources(self, preacher_buffer);
+        let need_preacher = !need_prophet && !need_pilgrim && !need_crusader && !myVisiblePreachers.length && nav.checkResources(self, preacher_buffer);
         
         if (need_prophet) {
             dir = nav.getRandomValidDir(self, true);

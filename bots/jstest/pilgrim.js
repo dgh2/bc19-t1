@@ -466,19 +466,22 @@ class Pilgrim {
         }
     }
     
-    moveToward(loc, max_fuel = this.self.specs.SPEED * SPECS.FUEL_PER_MOVE) {
-        //TODO: jump to farthest location costing less than max_fuel
-        let movement_locations = this.calculateMovementLocations(Math.max(this.self.fuel, max_fuel));
+    moveToward(loc, max_fuel = this.self.specs.SPEED * this.self.specs.FUEL_PER_MOVE) {
+        //this.self.log('max_fuel: ' + max_fuel);
+        let movement_locations = this.calculateMovementLocations(Math.min(this.self.fuel, max_fuel));
         if (movement_locations.length) {
             movement_locations.sort(nav.getDistanceComparator(loc));
+            let dist = nav.sqDist(this.self.me, movement_locations[0]);
+            //this.self.log('fuel to move ' + dist + ' to ' + movement_locations[0].x + ',' + movement_locations[0].y + ': ' + (this.self.specs.FUEL_PER_MOVE * dist));
             return this.self.move(movement_locations[0].x - this.self.me.x, movement_locations[0].y - this.self.me.y);
         }
     }
     
-    calculateMovementLocations(max_fuel = this.self.specs.SPEED * SPECS.FUEL_PER_MOVE) {
+    calculateMovementLocations(max_fuel = this.self.specs.SPEED * this.self.specs.FUEL_PER_MOVE) {
         //this.self.log('calling calculateMovementLocations with max_fuel: ' + max_fuel);
         let movement_locations = [];
-        let locations = this.calculateLocationsWithinRadius(this.self.me, Math.min(this.self.specs.SPEED, max_fuel / this.self.specs.FUEL_PER_MOVE));
+        let calculated_max = Math.min(this.self.specs.SPEED, max_fuel / this.self.specs.FUEL_PER_MOVE)
+        let locations = this.calculateLocationsWithinRadius(this.self.me, calculated_max);
         for (let i = 0; i < locations.length; i++) {
             let {x, y} = locations[i];
             //this.self.log('calculated location: ' + x + ',' + y);
@@ -486,7 +489,17 @@ class Pilgrim {
                 movement_locations.push(locations[i]);
             }
         }
-        //this.self.log('movement locations from ' + this.self.me.x + ',' + this.self.me.y + ' costing less than ' + max_fuel + ' fuel:');
+        /*
+        this.self.log('movement locations from ' + this.self.me.x + ',' + this.self.me.y + ' costing less than ' + max_fuel + ' fuel:');
+        let log = '[';
+        let separator = '';
+        for (let i = 0; i < movement_locations.length; i++) {
+            log += separator + '(' + movement_locations[i].x + ',' + movement_locations[i].y + ')';
+            separator = ',';
+        }
+        log += ']';
+        this.self.log(log);
+        */
         return movement_locations;
     }
     
@@ -497,8 +510,9 @@ class Pilgrim {
             for (let col = 0; col < this.self.getPassableMap().length; col++) {
                 for (let row = 0; row < this.self.getPassableMap()[col].length; row++) {
                     let test = {x: row, y: col};
-                    //this.self.log('testing location: ' + test.x + ',' + test.y);
-                    if (this.self.getPassableMap()[col][row] && nav.sqDist(from, test) <= radius) {
+                    let dist = nav.sqDist(from, test);
+                    if (this.self.getPassableMap()[col][row] && dist <= radius) {
+                        //this.self.log('found location: ' + test.x + ',' + test.y + ' at ' + dist + ' <= ' + radius);
                         locations.push(test);
                     }
                 }
