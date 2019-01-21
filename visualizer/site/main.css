@@ -26,6 +26,36 @@ body {
     overflow-y: scroll;
 }
 
+#stats {
+    position: absolute;
+    bottom: 0px;
+    left: 210px;
+    right: 510px;
+    padding: 20px;
+
+    background-color: rgba(255,255,255,0.9);
+    border: 2px solid lightcyan;
+}
+
+#health {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 500px;
+    padding: 10px;
+
+    background-color: rgba(255,255,255,0.9);
+    border-bottom: 2px solid lightcyan;
+}
+
+.red-bar {
+    background-color: red;
+}
+
+.blue-bar {
+    background-color: blue;
+}
+
 input[type=range] {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -107,6 +137,29 @@ input[type=range]::-ms-thumb {
     border: 2px solid #007bff;
     background: white;
     cursor: pointer;
+}
+
+input[type=range]:disabled::-moz-range-progress {
+    background: darkgrey;
+}
+
+input[type=range]:disabled::-ms-fill-lower {
+    background: darkgrey;
+}
+
+input[type=range]:disabled::-webkit-slider-thumb {
+    border-color: darkgrey;
+    cursor: default;
+}
+
+input[type=range]:disabled::-moz-range-thumb {
+    border-color: darkgrey;
+    cursor: default;
+}
+
+input[type=range]:disabled::-ms-thumb {
+    border-color: darkgrey;
+    cursor: default;
 }
 
 
@@ -198,4 +251,86 @@ p.selectable.blue {
 
 p.selectable:hover {
     cursor: pointer;
+}
+
+.sliderLabel {
+ width: max-content;
+}
+
+#allSliders {
+ display: flex;
+ width: 100%;
+ margin-right: 27%;
+ margin-left: 5%;
+}
+
+#allSliders > div {
+ flex: 1; /*grow*/
+}
+
+.sliderLabelContainer {
+  position: relative;
+}
+
+.sliderLabel {
+  /* position: absolute; That messes it up for some reason */ 
+  bottom: 7px;
+  right: 5px;
+  margin: 0px;
+}
+
+.switch {
+  display: inline-block;
+  height: 34px;
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  width: 60px;
+}
+
+.switch input {
+  display:none;
+}
+
+.slider {
+  background-color: #ccc;
+  bottom: 0;
+  cursor: pointer;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: .4s;
+}
+
+.slider:before {
+  background-color: #fff;
+  bottom: 4px;
+  content: "";
+  height: 26px;
+  left: 4px;
+  position: absolute;
+  transition: .4s;
+  width: 26px;
+}
+
+input:checked + .slider {
+  background-color: #66bb6a;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.container {
+  margin: 0 auto;
+  position: relative;
 }

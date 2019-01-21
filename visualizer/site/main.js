@@ -6,6 +6,12 @@ var Game = require('bc19/game')
 var SPECS = require('bc19/specs');
 var ActionRecord = require('bc19/action_record');
 
+var MersenneTwister = require('mersenne-twister');
+/**
+ * so that render knows which hilights to erase upon hovering over another square.
+ * is a [y, x] list
+ */
+var hilightsToErase = [];
 var UNIT_NAMES = [
     'Castle',
     'Church',
@@ -33,6 +39,42 @@ Sword by uzeir syarief from the Noun Project
 sniper by rizqa anindita from the Noun Project
 Tank by Sandhi Priyasmoro from the Noun Project
 */
+
+function patch() {
+    // allow us to access bound objects so we can copy the random state
+    var _bind = Function.prototype.apply.bind(Function.prototype.bind);
+    Object.defineProperty(Function.prototype, 'bind', {
+        value: function(obj) {
+            var boundFunction = _bind(this, arguments);
+            boundFunction.boundObject = obj;
+            return boundFunction;
+        }
+    });
+}
+patch();
+
+function deep_copy(game) {
+    // this step keeps a reference to the same mersenne-twister
+    var m = JSON.parse(JSON.stringify(game.random.boundObject));
+
+    var c = game.copy();
+
+    // check if this was before the MersenneTwister update:
+    if (game.random.boundObject.constructor.name != "MersenneTwister") {
+        return c;
+    }
+
+    var generator = new MersenneTwister();
+
+    var keys = Object.keys(m);
+    for (var i = 0; i < keys.length; ++i) {
+        generator[keys[i]] = m[keys[i]];
+    }
+
+    c.random = generator.random.bind(generator);
+
+    return c;
+}
 
 class Veww {
     process_replay(replay) {
@@ -62,13 +104,13 @@ class Veww {
                 document.getElementById('bc19_newest_version').innerText = versions['newest'];
             })
         });
-        
+
         this.replay = new Uint8Array(replay);
 
         this.seed = 0;
         for (let i = 0; i<4; i++) this.seed += (this.replay[i+2] << (24-8*i));
 
-        console.log('seed: ' + this.seed);
+        document.getElementById('replay_seed').innerText = this.seed;
 
         this.game = new Game(this.seed, 0, 0, false, false);
 
@@ -77,7 +119,7 @@ class Veww {
 
         // checkpoints is of the type [(int) turn, (Game) checkpoint]
         // checkpoints[i] is the round i
-        this.checkpoints = [[0, this.game.copy()]];
+        this.checkpoints = [[0, this.game]];
 
         // check if we ran into that bug
         if (this.checkpoints[0][1].robots.length == 0) {
@@ -93,10 +135,20 @@ class Veww {
         this.current_turn = 0;
         this.current_round = 0;
         this.current_robin = 0;
+        this.max_health = (this.current_game.robots.length / 2) * SPECS.UNITS[0].STARTING_HP;
 
         document.getElementById('game_max_turns').innerText = this.max_turns;
         document.getElementById('game_max_rounds').innerText = this.num_rounds;
         document.getElementById('game_max_robins').innerText = this.robin_per_round[0];
+
+        var set_turn = document.getElementById('input_set_turn');
+        var set_round = document.getElementById('input_set_round');
+        var range_set_turn = document.getElementById('input_range_set_turn');
+        var range_set_round = document.getElementById('input_range_set_round');
+        set_turn.min = range_set_turn.min = 0;
+        set_turn.max = range_set_turn.max = this.max_turns;
+        set_turn.min = range_set_round.min = 0;
+        set_turn.max = range_set_round.max = this.num_rounds;
 
         console.log(this.game);
 
@@ -115,14 +167,14 @@ class Veww {
 
     /**
      * Checkpoint the start of each round to make it easier to jump to certain positions.
-     * 
+     *
      * Creates the following lookup variables:
      * - this.num_rounds := number of rounds in the game
      * - this.robin_per_round := robin count per round
      */
     create_checkpoints() {
         // first round
-        var checkpoint = this.checkpoints[0][1].copy();
+        var checkpoint = deep_copy(this.checkpoints[0][1]);
         var robin = 0;
 
         this.robin_per_round = [0];
@@ -133,7 +185,7 @@ class Veww {
             checkpoint.enactTurn(diff);
 
             if (checkpoint.robin == 1) {
-                this.checkpoints.push([i+1, checkpoint.copy()]);
+                this.checkpoints.push([i+1, deep_copy(checkpoint)]);
 
                 // keep track of how many robots there were
                 this.robin_per_round.push(robin);
@@ -158,7 +210,7 @@ class Veww {
             this.current_turn = 0;
             this.current_round = 0;
             this.current_robin = 0;
-            
+
             this.round_bots = []
             for (var i = 0; i < this.current_game.robots.length; ++i) {
                 this.round_bots.push([this.current_game.robots[i], false, true]);
@@ -173,7 +225,7 @@ class Veww {
         round -= 1;
 
         // load the round
-        var checkpoint = this.checkpoints[round][1].copy();
+        var checkpoint = deep_copy(this.checkpoints[round][1]);
         var robin = 0;
 
         // track dead robots
@@ -244,15 +296,6 @@ class Veww {
         }
     }
 
-    next_turn_norender() {
-        // cancel autoplay if we reach the end
-        if (this.current_turn >= this.max_turns && this.is_playing) {
-            this.stop_autoplay();
-        } else {
-            this.jump_to_turn(this.current_turn + 1);
-        }
-    }
-
     next_turn() {
         // cancel autoplay if we reach the end
         if (this.current_turn >= this.max_turns && this.is_playing) {
@@ -286,11 +329,9 @@ class Veww {
             return;
         }
 
-        while (curr_time > this.last_turn_time + this.autoplay_delay) {
-            this.last_turn_time += this.autoplay_delay;
-            this.next_turn_norender();
-        }
-
+        var num_turns_elapsed = Math.ceil((curr_time - this.last_turn_time) / this.autoplay_delay);
+        this.last_turn_time += num_turns_elapsed * this.autoplay_delay;
+        this.jump_to_turn(Math.min(this.current_turn + num_turns_elapsed, this.max_turns));
         this.render();
 
         if (this.current_turn < this.max_turns) {
@@ -311,6 +352,10 @@ class Veww {
         document.getElementById('btn_prev_round').classList.add('disabled')
         document.getElementById('btn_next_robin').classList.add('disabled')
         document.getElementById('btn_prev_robin').classList.add('disabled')
+
+        // disable slider inputs
+        document.getElementById('input_range_set_turn').disabled = true
+        document.getElementById('input_range_set_round').disabled = true
 
         // configure start/stop
         document.getElementById('btn_start_autoplay').classList.add('disabled')
@@ -335,6 +380,10 @@ class Veww {
         document.getElementById('btn_prev_round').classList.remove('disabled')
         document.getElementById('btn_next_robin').classList.remove('disabled')
         document.getElementById('btn_prev_robin').classList.remove('disabled')
+
+        // enable slider inputs
+        document.getElementById('input_range_set_turn').disabled = false
+        document.getElementById('input_range_set_round').disabled = false
 
         // configure start/stop
         document.getElementById('btn_start_autoplay').classList.remove('disabled')
@@ -370,6 +419,9 @@ class Veww {
         this.graphics = new PIXI.Graphics();
         this.grid.addChild(this.graphics);
 
+        this.grid_overlay = new PIXI.Graphics();
+        this.grid.addChild(this.grid_overlay);
+
         this.unit_health = new PIXI.Graphics();
         this.grid.addChild(this.unit_health);
 
@@ -386,7 +438,7 @@ class Veww {
         this.spritepool = Array(6);
         for (var i = 0; i < 6; ++i) {
             this.spritepool[i] = [];
-            
+
             for (var j = 0; j < MAX_SPRITES_PER_TYPE; ++j) {
                 var sprite = new PIXI.Sprite(this.textures[i]);
                 sprite.anchor = new PIXI.Point(0, 0);
@@ -395,7 +447,7 @@ class Veww {
                 this.spritepool[i].push(sprite);
             }
         }
-        
+
         // interactive graphic components
         this.hover_coordinate = [-1,-1];
         this.selected_unit = -1; //index
@@ -451,7 +503,6 @@ class Veww {
 
         // scroll to zoom
         document.getElementById('game').addEventListener('wheel', function(event) {
-            
             // calculate target position in the grid's coordinate frame
             var px = event.x - this.grid.position.x;
             var py = event.y - this.grid.position.y;
@@ -466,6 +517,22 @@ class Veww {
         }.bind(this));
     }
 
+    dot_square(x, y) {
+        this.grid_overlay.beginFill(0x111111, 0.5);
+        var gx = x * (GRID_SIZE + GRID_SPACING) + (GRID_SIZE/2);
+        var gy = y * (GRID_SIZE + GRID_SPACING) + (GRID_SIZE/2);
+        this.grid_overlay.drawCircle(gx,gy,GRID_SIZE/6)
+        this.grid_overlay.endFill();
+    }
+
+    outline_square(color, x, y) {
+        this.dyn_graphics.beginFill(color);
+        var gx = x * (GRID_SIZE + GRID_SPACING);
+        var gy = y * (GRID_SIZE + GRID_SPACING);
+        this.dyn_graphics.drawRect(gx-GRID_SPACING,gy-GRID_SPACING,GRID_SIZE+(2*GRID_SPACING),GRID_SIZE+(2*GRID_SPACING));
+        this.dyn_graphics.endFill();
+    }
+
     // we can do this just once per game
     draw_grid() {
         this.graphics.clear();
@@ -473,7 +540,6 @@ class Veww {
         // render tiles
         for (var y = 0; y < this.size; ++y) {
             for (var x = 0; x < this.size; ++x) {
-
                 // determine tile color
                 if (this.current_game.karbonite_map[y][x]) {
                     this.graphics.beginFill(0x00ff00);
@@ -496,6 +562,50 @@ class Veww {
         }
     }
 
+    /*
+     * Given a radius, returns all offsets [dy, dx] in that radius
+     */
+    getOffsetsInRange(radius) {
+        var offsetsInRange = [];
+        var biggestStraightMove = 0;
+
+        while ((biggestStraightMove + 1) ** 2 <= radius) {
+            biggestStraightMove += 1;
+        }
+
+        for (var xMove = -biggestStraightMove; xMove <= biggestStraightMove; xMove++) {
+            for(var yMove = 0; (xMove ** 2) + (yMove ** 2) <= radius; yMove++) {
+                if( !((yMove === 0) && (xMove === 0)) ) {
+                    offsetsInRange.push([yMove, xMove]);
+                }
+                if(yMove !== 0) {
+                    offsetsInRange.push([-yMove, xMove]);
+                }
+            }
+        }
+
+        return offsetsInRange;
+    }
+
+    /*
+    * Given a start location and radius, returns all
+    * offsets [dx, dy] of passable squares on map within that radius
+    */
+    getPassableOffsets(startX, startY, radius, map) {
+        let offsetsInRange = this.getOffsetsInRange(radius);
+        return offsetsInRange.filter(function(offset) {
+            var yLoc = startY + offset[0];
+            var xLoc = startX + offset[1];
+                if( yLoc >= map.length || yLoc < 0) {
+                    return false;
+                }
+                if( xLoc >= map.length || xLoc < 0) {
+                    return false;
+                }
+            return map[yLoc][xLoc];
+        });
+    }
+
     /**
      * Renders the game to the canvas
      */
@@ -504,17 +614,15 @@ class Veww {
 
         // clear the graphics so we can redraw
         this.dyn_graphics.clear();
+        this.grid_overlay.clear();
         this.unit_health.clear();
 
         // hover coordinate
         var x = this.hover_coordinate[0];
         var y = this.hover_coordinate[1];
 
-        this.dyn_graphics.beginFill(0x9e42f4);
-        var gx = x * (GRID_SIZE + GRID_SPACING);
-        var gy = y * (GRID_SIZE + GRID_SPACING);
-        this.dyn_graphics.drawRect(gx-GRID_SPACING,gy-GRID_SPACING,GRID_SIZE+(2*GRID_SPACING),GRID_SIZE+(2*GRID_SPACING));
-        this.dyn_graphics.endFill();
+        // draw selection box
+        this.outline_square(0x9e42f4, x, y);
 
         // hide all units
         for (var i = 0; i < 6; ++i) {
@@ -557,7 +665,7 @@ class Veww {
             }
 
             // display robot health in tile border
-            var health_percentage = robot.health / SPECS.UNITS[robot.unit].STARTING_HP;
+            var health_percentage = Math.max(robot.health / SPECS.UNITS[robot.unit].STARTING_HP, 0);
 
             if (health_percentage < 1) {
                 // make space
@@ -578,6 +686,53 @@ class Veww {
         this.render_action();
     }
 
+    render_grid_overlay(robot) {
+        // overlay colors
+        let redVisionColor = 0xf49f9f;
+        let blueVisionColor = 0x7686FD;
+        let redAttackColor = 0x710000;
+        let blueAttackColor = 0x001087;
+
+        // overlay options
+        let wantsVisible = document.getElementById("shadeVisible").checked;
+        let wantsAttackable = document.getElementById("shadeAttackable").checked;
+        let wantsMovable = document.getElementById("shadeMovable").checked;
+
+        if (wantsMovable || wantsVisible || wantsAttackable) {
+            let vision = SPECS.UNITS[robot.unit].VISION_RADIUS;
+
+            //since vision radius is >= than attack or move radius for all units, this is okay
+            let offsets = this.getPassableOffsets(robot.x, robot.y, vision, this.current_game.map);
+            offsets.forEach(function(offset) {
+                // calculate grid position of this offset
+                let gridY = offset[0] + robot.y;
+                let gridX = offset[1] + robot.x;
+
+                let radius = (gridX - robot.x)**2 + (gridY - robot.y)**2;
+                if (wantsVisible) {
+                    let visionColor = (robot.team == 0) ? redVisionColor : blueVisionColor;
+                    this.grid_overlay.beginFill(visionColor, 0.5);
+                }
+
+                let attack = SPECS.UNITS[robot.unit].ATTACK_RADIUS;
+                if(attack && (attack[0] <= radius) && (radius <= attack[1]) && wantsAttackable) {
+                    let attackColor = (robot.team == 0) ? redAttackColor : blueAttackColor;
+                    this.grid_overlay.beginFill(attackColor, 0.5);
+                }
+
+                let gx = gridX * (GRID_SIZE + GRID_SPACING);
+                let gy = gridY * (GRID_SIZE + GRID_SPACING);
+                this.grid_overlay.drawRect(gx,gy,GRID_SIZE,GRID_SIZE);
+                this.grid_overlay.endFill();
+
+                let move = SPECS.UNITS[robot.unit].SPEED;
+                if(move > 0 && wantsMovable && radius <= move && this.current_game.map[gridY][gridX] && !this.current_game.shadow[gridY][gridX]) {
+                    this.dot_square(gridX, gridY);
+                }
+            }.bind(this));
+        }
+    }
+
     // show what action is currently being done
     render_action() {
         // get current diff
@@ -585,9 +740,9 @@ class Veww {
 
         var i = this.current_turn - 1;
         var diff = this.replay.slice(6 + 8 * i, 6 + 8 * (i + 1));
-        
+
         var move = ActionRecord.FromBytes(diff);
-        
+
         // find the robot for turn (robin-1)
         var robot_idx = 0;
         var i = 0;
@@ -637,11 +792,18 @@ class Veww {
         document.getElementById('game_curr_robin').innerText = this.current_robin;
         document.getElementById('game_max_robins').innerText = this.robin_per_round[this.current_round];
 
-        document.getElementById('game_red_fuel').innerText = this.current_game.fuel[0];
-        document.getElementById('game_blue_fuel').innerText = this.current_game.fuel[1];
-        document.getElementById('game_red_karbonite').innerText = this.current_game.karbonite[0];
-        document.getElementById('game_blue_karbonite').innerText = this.current_game.karbonite[1];
-    
+        document.getElementById('input_range_set_turn').value = this.current_turn;
+        document.getElementById('input_range_set_round').value = this.current_round;
+
+        var red_health = 0;
+        var blue_health = 0;
+
+        var red_units = 0;
+        var blue_units = 0;
+
+        var red_unit_value = 0;
+        var blue_unit_value = 0;
+
         // turn queue
         var html = '';
 
@@ -649,8 +811,62 @@ class Veww {
             var robot = this.current_game.robots[i];
             var color = robot.team == 0 ? 'red' : 'blue';
             html += `<p class='selectable ${color}' onmouseover=veww.select_unit(${i})>${i+1}: ${UNIT_NAMES[robot.unit]} [${robot.id}]</p>`
+        
+            if (robot.unit == SPECS.CASTLE) {
+                if (robot.team == 0) {
+                    red_health += robot.health;
+                } else {
+                    blue_health += robot.health;
+                }
+            }
+
+            if (robot.team == 0) {
+                red_units += 1;
+                red_unit_value += robot.health;
+            } else {
+                blue_units += 1;
+                blue_unit_value += robot.health;
+            }
         }
         document.getElementById('turn_queue').innerHTML = html;
+
+        var red_health_percentage = red_health / this.max_health;
+        var blue_health_percentage = blue_health / this.max_health;
+
+        // health bars
+        document.getElementById('health_red').innerText = red_health;
+        document.getElementById('health_red').style.width = (red_health_percentage * 100) + '%';
+
+        document.getElementById('health_blue').innerText = blue_health;
+        document.getElementById('health_blue').style.width = (blue_health_percentage * 100) + '%';
+
+        // karbonite bars
+        document.getElementById('karbonite_red').innerText = this.current_game.karbonite[0];
+        document.getElementById('karbonite_red').style.width = (this.current_game.karbonite[0] / (this.current_game.karbonite[0]+this.current_game.karbonite[1]) * 100) + '%';
+
+        document.getElementById('karbonite_blue').innerText = this.current_game.karbonite[1];
+        document.getElementById('karbonite_blue').style.width = (this.current_game.karbonite[1] / (this.current_game.karbonite[0]+this.current_game.karbonite[1]) * 100) + '%';
+
+        // fuel bars
+        document.getElementById('fuel_red').innerText = this.current_game.fuel[0];
+        document.getElementById('fuel_red').style.width = (this.current_game.fuel[0] / (this.current_game.fuel[0]+this.current_game.fuel[1]) * 100) + '%';
+
+        document.getElementById('fuel_blue').innerText = this.current_game.fuel[1];
+        document.getElementById('fuel_blue').style.width = (this.current_game.fuel[1] / (this.current_game.fuel[0]+this.current_game.fuel[1]) * 100) + '%';
+
+        // unit bars
+        document.getElementById('units_red').innerText = red_units;
+        document.getElementById('units_red').style.width = (red_units / (red_units+blue_units) * 100) + '%';
+
+        document.getElementById('units_blue').innerText = blue_units;
+        document.getElementById('units_blue').style.width = (blue_units / (red_units+blue_units) * 100) + '%';
+
+        // unit bars
+        document.getElementById('unit_value_red').innerText = red_unit_value;
+        document.getElementById('unit_value_red').style.width = (red_unit_value / (red_unit_value+blue_unit_value) * 100) + '%';
+
+        document.getElementById('unit_value_blue').innerText = blue_unit_value;
+        document.getElementById('unit_value_blue').style.width = (blue_unit_value / (red_unit_value+blue_unit_value) * 100) + '%';
     }
 
     write_tooltip() {
@@ -681,12 +897,16 @@ class Veww {
                 var robot = this.current_game.robots[i];
 
                 if (robot.x == hx && robot.y == hy) {
+                    // render visible, attackable and movable squares
+                    this.render_grid_overlay(robot);
+
                     document.getElementById('unit_type').innerText = UNIT_NAMES[robot.unit];
                     document.getElementById('unit_id').innerText = robot.id;
 
                     document.getElementById('unit_signal').innerText = robot.signal;
+                    document.getElementById('unit_signal_radius').innerText = robot.signal_radius;
                     document.getElementById('unit_castle_talk').innerText = robot.castle_talk;
-                    
+
                     document.getElementById('unit_img').src = '/img/' + UNIT_NAMES[robot.unit].toLowerCase() + '.png';
 
                     if (robot.team == 0) {
@@ -773,6 +993,14 @@ function load_replay() {
             window.location.href = '/settings';
         }
     });
+
+    fetch('/replay_path').then(function(resp) {
+        if (resp.ok) {
+            resp.text().then(function(resp) {
+                document.getElementById('replay_path').innerText = resp;
+            });
+        }
+    });
 }
 
 load_replay();
@@ -781,7 +1009,7 @@ load_replay();
 var socket = io();
 socket.on('file_update', load_replay);
 
-// add click listeners
+// add click / slider / radio listeners
 document.getElementById('btn_next_turn').onclick = function(){
     if (!veww.is_playing) veww.next_turn();
 }
@@ -821,12 +1049,38 @@ document.getElementById('btn_jump_start').onclick = function(){
     }
 }
 
+document.getElementById('input_set_speed').oninput = function() {
+    veww.autoplay_delay = Math.pow(1000 / parseInt(this.value), 4.32817);
+}
+
+Array.from(document.getElementById('radio_select_input_type').children).forEach(function(elem) {
+    elem.children[0].onchange = function() {
+        if (this.value == 'number') {
+            document.getElementById('input_range_set_turn').parentElement.classList.add('hidden');
+            document.getElementById('input_range_set_round').parentElement.classList.add('hidden');
+            document.getElementById('input_set_turn').parentElement.classList.remove('hidden');
+            document.getElementById('input_set_round').parentElement.classList.remove('hidden');
+        } else if (this.value == 'range') {
+            document.getElementById('input_set_turn').parentElement.classList.add('hidden');
+            document.getElementById('input_set_round').parentElement.classList.add('hidden');
+            document.getElementById('input_range_set_turn').parentElement.classList.remove('hidden');
+            document.getElementById('input_range_set_round').parentElement.classList.remove('hidden');
+        }
+    }
+});
+
 document.getElementById('btn_set_turn').onclick = function(){
     if (!veww.is_playing) {
         var turn = parseInt(document.getElementById('input_set_turn').value);
         veww.jump_to_turn(turn);
         veww.render();
     }
+}
+
+document.getElementById('input_range_set_turn').oninput = function() {
+    var turn = parseInt(this.value);
+    veww.jump_to_turn(turn);
+    veww.render();
 }
 
 document.getElementById('btn_set_round').onclick = function(){
@@ -837,9 +1091,10 @@ document.getElementById('btn_set_round').onclick = function(){
     }
 }
 
-// add slider listener
-document.getElementById('input_set_speed').oninput = function() {
-    veww.autoplay_delay = 1000 / parseInt(this.value);
+document.getElementById('input_range_set_round').oninput = function() {
+    var round = parseInt(this.value);
+    veww.jump_to_round_robin(round, 1);
+    veww.render();
 }
 
 document.getElementById('btn_switch_bc19_version').onclick = function(){
@@ -860,4 +1115,26 @@ document.getElementById('btn_switch_bc19_version').onclick = function(){
         document.getElementById('btn_switch_text').classList.remove('hidden');
         document.getElementById('btn_switch_loading').classList.add('hidden');
     });
+}
+
+document.getElementById('btn_toggle_health_bars').onclick = function(){
+    var health = document.getElementById('health');
+
+    console.log(health.style.display);
+
+    if (health.style.display == 'none') {
+        health.style.display = 'block';
+    } else {
+        health.style.display = 'none';
+    }
+}
+
+document.getElementById('btn_toggle_stat_bars').onclick = function(){
+    var stats = document.getElementById('stats');
+
+    if (stats.style.display == 'none') {
+        stats.style.display = 'block';
+    } else {
+        stats.style.display = 'none';
+    }
 }
