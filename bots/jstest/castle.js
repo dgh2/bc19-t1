@@ -92,6 +92,8 @@ class Castle {
             dir = nav.getRandomValidDir(self, true);
         } else if (need_pilgrim) {
             dir = nav.getRandomValidDir(self, false, self.karbonite >= self.fuel, self.fuel > self.karbonite);
+        } else {
+            dir = nav.getRandomValidDir(self, true);
         }
         if (!nav.exists(dir)) {
             //self.log('No valid directions');

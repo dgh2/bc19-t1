@@ -41,7 +41,7 @@ class Church {
             dir = nav.getRandomValidDir(self, true);
         } else if (need_pilgrim) {
             dir = nav.getRandomValidDir(self, false, self.karbonite >= self.fuel, self.fuel > self.karbonite);
-        } else if (need_preacher || need_crusader) {
+        } else {
             dir = nav.getRandomValidDir(self, true);
         }
         if (!nav.exists(dir)) {
