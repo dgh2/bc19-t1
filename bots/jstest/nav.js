@@ -58,17 +58,10 @@ class Nav {
         let choice;
         let randomCompassDirs = this.getRandomCompassDirs();
         for (let i = 0; i < randomCompassDirs.length; i++) {
-            /*
-            let check_dir = this.toDir(randomCompassDirs[i]);
-            let check_loc = this.applyDir(self.me, check_dir);
-            if (this.isPassable(self, check_loc)) {
-                return check_dir;
-            //*/
-            //*
             let random_dir = this.toDir(randomCompassDirs[i]);
             let loc = this.applyDir(self.me, random_dir);
             if (this.isPassable(self, loc)) {
-                return random_dir;
+                //return random_dir;
                 
                 let random_dir_karbonite = self.getKarboniteMap()[loc.y][loc.x];
                 let random_dir_fuel = self.getFuelMap()[loc.y][loc.x];
@@ -94,7 +87,6 @@ class Nav {
                         choice = random_dir;
                     }
                 }
-                //*/
             }
         }
         return choice;
@@ -176,21 +168,6 @@ class Nav {
         };
     }
 
-/*
-    goto (self, loc, destination, fullMap, robotMap) {
-        let goalDir = this.getDir(loc, destination);
-        if (goalDir.x === 0 && goalDir.y === 0) {
-            return goalDir;
-        }
-        let tryDir = 0;
-        while (!this.isPassable(self, this.applyDir(loc, goalDir), fullMap, robotMap) && tryDir < 8) {
-            goalDir = this.rotate(goalDir, 1);
-            tryDir++;
-        }
-        return goalDir;
-    }
-*/
-
     sqDist(start, end) {
         return Math.pow(start.x - end.x, 2) + Math.pow(start.y - end.y, 2);
     }
@@ -218,15 +195,6 @@ class Nav {
         let visibleRobots = self.getVisibleRobots();
         for (let i = 0; i < visibleRobots.length; i++) {
             let robot = visibleRobots[i];
-            /*
-            if (self.isVisible(robot)) {
-                if (!this.exists(team)) {
-                    self.log('team doesn\'t matter');
-                } else if (robot.team === team) {
-                    self.log('team matches requested team: ' + team);
-                }
-            }
-            //*/
             if (self.isVisible(robot)
                 && (!this.exists(team) || robot.team === team)
                 && (!this.exists(units) 
@@ -242,13 +210,14 @@ class Nav {
     }
 
     //returns all locations where resourceMap is true that are not in the exclusion list sorted by distance
-    getResourceLocations(self, resourceMap, exclusionList) {
+    getResourceLocations(self, resourceMap, exclusionList, max_radius = -1) {
         let resources = [];
         for (let col = 0; col < resourceMap.length; col++) {
             for (let row = 0; row < resourceMap[col].length; row++) {
                 let loc = {x: row, y: col};
+                let out_of_range = (max_radius === -1 ? false : this.sqDist(self.me, loc) > max_radius);
                 let excluded = this.exists(exclusionList) && exclusionList.length && exclusionList.some(test => test.x === loc.x && test.y === loc.y);
-                if (resourceMap[col][row] && !excluded) {
+                if (resourceMap[col][row] && !excluded && !out_of_range) {
                     resources.push(loc);
                 }
             }
@@ -262,7 +231,6 @@ class Nav {
     //returns all karbonite sorted by distance
     getKarboniteLocations(self, exclusionList) {
         let resourceMap = self.getKarboniteMap();
-        //TODO: keep a list of locations of karbonite to exclude, add to this map when you see a worker on a karbonite
         let resources = this.getResourceLocations(self, resourceMap, exclusionList);
         if (resources.length) {
             resources.sort(this.getDistanceComparator(self.me));
@@ -273,7 +241,6 @@ class Nav {
     //returns all fuel sorted by distance
     getFuelLocations(self, exclusionList) {
         let resourceMap = self.getFuelMap();
-        //TODO: keep a list of locations of fuel to exclude, add to this map when you see a worker on a fuel
         let resources = this.getResourceLocations(self, resourceMap, exclusionList);
         if (resources.length) {
             resources.sort(this.getDistanceComparator(self.me));

@@ -18,16 +18,30 @@ class Church {
         let preacher_karbonite = SPECS['UNITS'][SPECS.PREACHER].CONSTRUCTION_KARBONITE;
         let preacher_fuel = SPECS['UNITS'][SPECS.PREACHER].CONSTRUCTION_FUEL;
         
-        let pilgrim_resources = {karbonite: 3*church_karbonite + pilgrim_karbonite, fuel: 3*church_fuel + pilgrim_fuel};
-        let crusader_resources = {karbonite: 3*church_karbonite + crusader_karbonite, fuel: 3*church_fuel + crusader_fuel};
-        let prophet_resources = {karbonite: 3*church_karbonite + prophet_karbonite, fuel: 3*church_fuel + prophet_fuel};
-        let preacher_resources = {karbonite: 3*church_karbonite + preacher_karbonite, fuel: 3*church_fuel + preacher_fuel};
+        let pilgrim_buffer = {karbonite: 3*church_karbonite + pilgrim_karbonite, fuel: 3*church_fuel + pilgrim_fuel};
+        let crusader_buffer = {karbonite: 3*church_karbonite + crusader_karbonite, fuel: 3*church_fuel + crusader_fuel};
+        let prophet_buffer = {karbonite: 3*church_karbonite + prophet_karbonite, fuel: 3*church_fuel + prophet_fuel};
+        let preacher_buffer = {karbonite: 3*church_karbonite + preacher_karbonite, fuel: 3*church_fuel + preacher_fuel};
         
-        let need_pilgrim = !nav.checkResources(self, {karbonite: 0, fuel: 3*church_fuel}) || !nav.checkResources(self, {karbonite: 3*church_karbonite, fuel: 0});
+        let closestEnemyAttackers = nav.getVisibleRobots(self, self.enemy_team, [SPECS.CASTLE, SPECS.CRUSADER, SPECS.PROPHET, SPECS.PREACHER]);
+        let myVisiblePilgrims = nav.getVisibleRobots(self, self.team, SPECS.PILGRIM);
+        let myVisiblePreachers = nav.getVisibleRobots(self, self.team, SPECS.PREACHER);
+        let myVisibleProphets = nav.getVisibleRobots(self, self.team, SPECS.PROPHET);
+        let myVisibleCrusaders = nav.getVisibleRobots(self, self.team, SPECS.CRUSADER);
+        let visibleResources = nav.getResourceLocations(self, self.getKarboniteMap(), null, self.specs.VISION_RADIUS);
+        visibleResources = visibleResources.concat(nav.getResourceLocations(self, self.getFuelMap(), null, self.specs.VISION_RADIUS));
         
-        if (need_pilgrim && nav.checkResources(self, pilgrim_resources)) {
-            dir = nav.getRandomValidDir(self, self.karbonite >= self.fuel, self.fuel > self.karbonite);
-        } else {
+        let excess_pilgrims = myVisiblePilgrims.length - visibleResources.length;
+        let need_prophet = nav.checkResources(self, prophet_buffer) && (closestEnemyAttackers.length || myVisibleProphets.length < myVisiblePreachers.length);
+        let need_pilgrim = nav.checkResources(self, pilgrim_buffer) && (excess_pilgrims < myVisiblePreachers.length);
+        let need_crusader = nav.checkResources(self, crusader_buffer) && (self.step >= 900 || myVisibleCrusaders.length < myVisiblePreachers.length);
+        let need_preacher = !need_prophet && !need_pilgrim && !need_crusader && nav.checkResources(self, preacher_buffer);
+        
+        if (need_prophet) {
+            dir = nav.getRandomValidDir(self, true);
+        } else if (need_pilgrim) {
+            dir = nav.getRandomValidDir(self, false, self.karbonite >= self.fuel, self.fuel > self.karbonite);
+        } else if (need_preacher || need_crusader) {
             dir = nav.getRandomValidDir(self, true);
         }
         if (!nav.exists(dir)) {
@@ -36,23 +50,19 @@ class Church {
         }
         
         let loc = nav.applyDir(self.me, dir);
-        if (need_pilgrim && nav.checkResources(self, pilgrim_resources) && nav.canBuild(self, SPECS.PILGRIM, dir)) {
+        if (need_prophet && nav.canBuild(self, SPECS.PROPHET, dir)) {
+            self.log('Building a prophet at ' + loc.x + ',' + loc.y);
+            return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
+        } else if (need_pilgrim && nav.canBuild(self, SPECS.PILGRIM, dir)) {
             self.log('Building a pilgrim at ' + loc.x + ',' + loc.y);
             return self.buildUnit(SPECS.PILGRIM, dir.x, dir.y);
-        } else if (self.step % 3 === 0 && nav.checkResources(self, prophet_resources) && nav.canBuild(self, SPECS.PROPHET, dir)) {
-            self.log('Building a prophet at ' + loc.x + ',' + loc.y);
-            return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
-        } else if (self.step % 5 === 0 && nav.checkResources(self, crusader_resources) && nav.canBuild(self, SPECS.CRUSADER, dir)) {
-            self.log('Building a crusader at ' + loc.x + ',' + loc.y);
-            return self.buildUnit(SPECS.CRUSADER, dir.x, dir.y);
-        } else if (self.step % 7 === 0 && nav.checkResources(self, preacher_resources) && nav.canBuild(self, SPECS.PREACHER, dir)) {
+        } else if (need_preacher && nav.canBuild(self, SPECS.PREACHER, dir)) {
             self.log('Building a preacher at ' + loc.x + ',' + loc.y);
             return self.buildUnit(SPECS.PREACHER, dir.x, dir.y);
+        } else if (need_crusader && nav.canBuild(self, SPECS.CRUSADER, dir)) {
+            self.log('Building a crusader at ' + loc.x + ',' + loc.y);
+            return self.buildUnit(SPECS.CRUSADER, dir.x, dir.y);
         }
-        /*else if (self.step % 2 === 0 && nav.checkResources(self, prophet_resources) && nav.canBuild(self, SPECS.PROPHET, dir)) {
-            self.log('Building a prophet at ' + loc.x + ',' + loc.y);
-            return self.buildUnit(SPECS.PROPHET, dir.x, dir.y);
-        }*/
     }
 }
 

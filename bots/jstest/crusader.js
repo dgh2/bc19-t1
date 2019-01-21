@@ -32,10 +32,6 @@ class Crusader {
             let dist = nav.sqDist(self.me, closest);
             let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
             //self.log('closestEnemyAttacker: ' + closest.x + ',' + closest.y + ' is ' + dist + ' to the ' + compassDir);
-            //if () {
-                //TODO: kite, if enemy can attack us and we can leave their attack range in one move, do so
-                //TODO: for prophets, try to move inside their attack radius
-            //} else {
             if (dist + 2**2 > SPECS.UNITS[closest.unit].ATTACK_RADIUS[1]) {
                 self.log('Moving toward closest enemy attacker: ' + closest.x + ',' + closest.y + ' to the ' + compassDir);
                 let attack_offset = {x: closest.x - self.me.x, y: closest.y - self.me.y};
@@ -51,14 +47,9 @@ class Crusader {
             let dist = nav.sqDist(self.me, closest);
             let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
             //self.log('closestEnemyPilgrim: ' + closest.x + ',' + closest.y + ' is ' + dist + ' to the ' + compassDir);
-            //if () {
-                //TODO: kite, if enemy can attack us and we can leave their attack range in one move, do so
-                //TODO: for prophets, try to move inside their attack radius
-            //} else {
-                self.log('Moving toward closest enemy pilgrim: ' + closest.x + ',' + closest.y + ' to the ' + compassDir);
-                let attack_offset = {x: closest.x - self.me.x, y: closest.y - self.me.y};
-                dir = nav.getDir(self.me, closest);
-            //}
+            self.log('Moving toward closest enemy pilgrim: ' + closest.x + ',' + closest.y + ' to the ' + compassDir);
+            let attack_offset = {x: closest.x - self.me.x, y: closest.y - self.me.y};
+            dir = nav.getDir(self.me, closest);
         }
         
         if (nav.exists(closestEnemyChurches) && closestEnemyChurches.length) {
@@ -66,14 +57,9 @@ class Crusader {
             let dist = nav.sqDist(self.me, closest);
             let compassDir = nav.toCompassDir(nav.getDir(self.me, closest));
             //self.log('closestEnemyChurch: ' + closest.x + ',' + closest.y + ' is ' + dist + ' to the ' + compassDir);
-            //if () {
-                //TODO: kite, if enemy can attack us and we can leave their attack range in one move, do so
-                //TODO: for prophets, try to move inside their attack radius
-            //} else {
-                self.log('Moving toward closest enemy church: ' + closest.x + ',' + closest.y + ' to the ' + compassDir);
-                let attack_offset = {x: closest.x - self.me.x, y: closest.y - self.me.y};
-                dir = nav.getDir(self.me, closest);
-            //}
+            self.log('Moving toward closest enemy church: ' + closest.x + ',' + closest.y + ' to the ' + compassDir);
+            let attack_offset = {x: closest.x - self.me.x, y: closest.y - self.me.y};
+            dir = nav.getDir(self.me, closest);
         }
         
         //TODO: follow closest friendly pilgrim ! on a resource and not near a church or castle
