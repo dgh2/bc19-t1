@@ -5,7 +5,6 @@ const SUPPRESS_LOGS = false;
 const TIME_ALERT = SPECS.CHESS_EXTRA; //display a log when more than this amount of time was used last turn
 const TIME_WARNING = SPECS.CHESS_INITIAL * .6; //display a log and skip some of this turn if less than this much time remains
 const TIME_ERROR = SPECS.CHESS_INITIAL * .3; //display a log and skip this turn if less than this much time remains
-//const FUNCTION_LIST = [castle, church, pilgrim, crusader, prophet, preacher];
 const UNIT_TYPES = ['Castle', 'Church', 'Pilgrim', 'Crusader', 'Prophet', 'Preacher'];
 const ATTACK_PRIORITY = [SPECS.CASTLE, SPECS.PREACHER, SPECS.PROPHET, SPECS.CRUSADER, SPECS.CHURCH, SPECS.PILGRIM];
 
@@ -180,6 +179,17 @@ class MyRobot extends BCAbstractRobot {
         }
     }
     
+    walk() {
+        if (this.me.unit === SPECS.PILGRIM) {
+            let has_karbonite = !!this.me.karbonite;
+            let has_fuel = !!this.me.fuel;
+        }
+        return this.random_walk();
+    }
+    
+    run() {
+    }
+    
     random_walk() {
         if (!this.specs.SPEED) {
             return;
@@ -211,12 +221,11 @@ class MyRobot extends BCAbstractRobot {
         }
     }
     
-    hasResourcesForUnits() {
-        let cost = this.getTotalResourceCost.apply(this, arguments);
-        return this.checkResources(cost);
+    hasResourcesForUnits() { //Accepts any number of arguments
+        return this.checkResources(this.getTotalResourceCost.apply(this, arguments));
     }
     
-    getTotalResourceCost() {
+    getTotalResourceCost() { //Accepts any number of arguments
         let k = 0;
         let f = 0;
         for (let i = 0; i < arguments.length; i++) {
@@ -228,21 +237,22 @@ class MyRobot extends BCAbstractRobot {
 
     checkResources(resources) {
         if (this.karbonite < resources.karbonite) {
-            return false; //not enough karbonite
+            return false;
         }
         if (this.fuel < resources.fuel) {
-            return false; //not enough fuel
+            return false;
         }
         return true;
     }
     
     initialize() {
         //first turn initialization
-        //this._unit = FUNCTION_LIST[this.me.unit].constructor.name;
         this._unit = UNIT_TYPES[this.me.unit];
         this.specs = SPECS.UNITS[this.me.unit];
         this.team = this.me.team;
         this.enemy_team = (this.me.team === SPECS.RED ? SPECS.BLUE : SPECS.RED);
+        this.reflection = this.nav.getReflection();
+        this.center = this.nav.getMapCenter();
     }
 }
 

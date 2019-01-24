@@ -306,6 +306,69 @@ class Nav {
       }
       return true;
     }
+    
+    getReflection() {
+        let reflection = {x: 0, y: -1};
+        let width = this.self.getPassableMap().length;
+        let height = this.self.getPassableMap()[col].length;
+        for (let col = 0; col < width; col++) {
+            for (let row = 0; row < height; row++) {
+                let loc = {x: row, y: col};
+                let h_loc = {x: row, y: width - col - 1};
+                let v_loc = {x: height - row - 1, y: col};
+                
+                let passable = this.self.getPassableMap()[loc.y][loc.x];
+                let karbonite = this.self.getPassableMap()[loc.y][loc.x];
+                let fuel = this.self.getPassableMap()[loc.y][loc.x];
+                
+                let h_passable = this.self.getPassableMap()[h_loc.y][h_loc.x];
+                let v_passable = this.self.getPassableMap()[v_loc.y][v_loc.x];
+                let h_karbonite = this.self.getKarboniteMap()[h_loc.y][h_loc.x];
+                let v_karbonite = this.self.getKarboniteMap()[v_loc.y][v_loc.x];
+                let h_fuel = this.self.getFuelMap()[h_loc.y][h_loc.x];
+                let v_fuel = this.self.getFuelMap()[v_loc.y][v_loc.x];
+                
+                let h_passable_reflection = (h_passable === passable && v_passable !== passable);
+                let v_passable_reflection = (h_passable !== passable && v_passable === passable);
+                let h_karbonite_reflection = (h_karbonite === karbonite && v_karbonite !== karbonite);
+                let v_karbonite_reflection = (h_karbonite !== karbonite && v_karbonite === karbonite);
+                let h_fuel_reflection = (h_fuel === fuel && v_fuel !== fuel);
+                let v_fuel_reflection = (h_fuel !== fuel && v_fuel === fuel);
+                
+                if ((h_passable_reflection && !v_passable_reflection)
+                    || (h_karbonite_reflection && !v_karbonite_reflection)
+                    || (h_fuel_reflection && !v_fuel_reflection)) {
+                    return {horizontal: 1, vertical: 0}; 
+                }
+                if ((!h_passable_reflection && v_passable_reflection)
+                    || (!h_karbonite_reflection && v_karbonite_reflection)
+                    || (!h_fuel_reflection && v_fuel_reflection)) {
+                    return {horizontal: 0, vertical: 1};
+                }
+            }
+        }
+        return {horizontal: 1, vertical: 1};
+    }
+    
+    getMapCenter(getClosest = true) {
+        let width = this.self.getPassableMap().length;
+        let height = this.self.getPassableMap()[col].length;
+        if (width % 2) { //Width is odd, so there's no true center
+            if (getClosest) {
+                width += (2*this.self.me.x < width ? -1, 1); //Adjust width so half is the center col closest to this unit
+            } else {
+                width += (2*this.self.me.x < width ? 1, -1); //Adjust width so half is the center col farthest from this unit
+            }
+        }
+        if (height % 2) { //Height is odd, so there's no true center
+            if (getClosest) {
+                height += (2*this.self.me.y < height ? -1, 1); //Adjust height so half is the center row closest to this unit
+            } else {
+                height += (2*this.self.me.y < height ? -1, 1); //Adjust height so half is the center row farthest from this unit
+            }
+        }
+        return {x: 0.5 * width, y: 0.5 * height};
+    }
 }
 
 export default Nav;
