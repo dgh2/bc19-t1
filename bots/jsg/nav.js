@@ -310,7 +310,7 @@ class Nav {
     getReflection() {
         let reflection = {x: 0, y: -1};
         let width = this.self.getPassableMap().length;
-        let height = this.self.getPassableMap()[col].length;
+        let height = this.self.getPassableMap()[0].length;
         for (let col = 0; col < width; col++) {
             for (let row = 0; row < height; row++) {
                 let loc = {x: row, y: col};
@@ -352,19 +352,19 @@ class Nav {
     
     getMapCenter(getClosest = true) {
         let width = this.self.getPassableMap().length;
-        let height = this.self.getPassableMap()[col].length;
+        let height = this.self.getPassableMap()[0].length;
         if (width % 2) { //Width is odd, so there's no true center
             if (getClosest) {
-                width += (2*this.self.me.x < width ? -1, 1); //Adjust width so half is the center col closest to this unit
+                width += (2*this.self.me.x < width ? -1 : 1); //Adjust width so half is the center col closest to this unit
             } else {
-                width += (2*this.self.me.x < width ? 1, -1); //Adjust width so half is the center col farthest from this unit
+                width += (2*this.self.me.x < width ? 1 : -1); //Adjust width so half is the center col farthest from this unit
             }
         }
         if (height % 2) { //Height is odd, so there's no true center
             if (getClosest) {
-                height += (2*this.self.me.y < height ? -1, 1); //Adjust height so half is the center row closest to this unit
+                height += (2*this.self.me.y < height ? -1 : 1); //Adjust height so half is the center row closest to this unit
             } else {
-                height += (2*this.self.me.y < height ? -1, 1); //Adjust height so half is the center row farthest from this unit
+                height += (2*this.self.me.y < height ? -1 : 1); //Adjust height so half is the center row farthest from this unit
             }
         }
         return {x: 0.5 * width, y: 0.5 * height};
