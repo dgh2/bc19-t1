@@ -18,7 +18,7 @@ class MyRobot extends BCAbstractRobot {
         
         this.step = -1;
         this.specs;
-        this.previous_time = SPECS.CHESS_INITIAL - SPECS.CHESS_EXTRA;
+        this.previousTime = SPECS.CHESS_INITIAL - SPECS.CHESS_EXTRA;
         this.nav = new Nav(this);
     }
     
@@ -34,12 +34,12 @@ class MyRobot extends BCAbstractRobot {
         if (this.step == -1) {
             this.initialize();
         }
-        let step_time_cost = this.previous_time - (this.time - SPECS.CHESS_EXTRA);
-        this.previous_time = this.time;
+        let stepTimeCost = this.previousTime - (this.time - SPECS.CHESS_EXTRA);
+        this.previousTime = this.time;
         this.step++;
-        this.castleTalk(this.me.unit + 1); //unit+1 because all units have castle_talk == 0 between creation and their first turn
-        if (step_time_cost >= TIME_ALERT) {
-            this.log('ALERT: Excessive time of ' + step_time_cost + ' used last turn! ' + this.time + ' remaining.');
+        this.castleTalk(this.me.unit + 1); //unit+1 because all units have castleTalk == 0 between creation and their first turn
+        if (stepTimeCost >= TIME_ALERT) {
+            this.log('ALERT: Excessive time of ' + stepTimeCost + ' used last turn! ' + this.time + ' remaining.');
         }
         if (this.time <= TIME_WARNING) {
             this.log('WARNING: Time low, running shortened turn! ' + this.time + ' remaining.');
@@ -93,7 +93,7 @@ class MyRobot extends BCAbstractRobot {
             //this.log('Gathering');
             return action;
         }
-        action = this.random_walk();
+        action = this.randomWalk();
         if (action) {
             //this.log('Randomly walking');
             return action;
@@ -106,12 +106,12 @@ class MyRobot extends BCAbstractRobot {
             return;
         }
         
-        let karbonite_full = this.me.karbonite >= this.specs.KARBONITE_CAPACITY;
-        let fuel_full = this.me.fuel >= this.specs.FUEL_CAPACITY;
-        if (karbonite_full || fuel_full) {
+        let karboniteFull = this.me.karbonite >= this.specs.KARBONITE_CAPACITY;
+        let fuelFull = this.me.fuel >= this.specs.FUEL_CAPACITY;
+        if (karboniteFull || fuelFull) {
             let bases = this.nav.getVisibleRobots(this.team, [SPECS.CASTLE, SPECS.CHURCH]);
-            let base_is_adjacent = bases.length && this.nav.sqDist(this.me, bases[0]) < 2**2;
-            if (base_is_adjacent) {
+            let baseIsAdjacent = bases.length && this.nav.sqDist(this.me, bases[0]) < 2**2;
+            if (baseIsAdjacent) {
                 let dir = this.nav.getDir(this.me, bases[0]);
                 return this.give(dir.x, dir.y, this.me.karbonite, this.me.fuel);
             }
@@ -122,11 +122,11 @@ class MyRobot extends BCAbstractRobot {
         if (this.me.unit !== SPECS.PILGRIM) {
             return;
         }
-        let karbonite_full = this.me.karbonite >= this.specs.KARBONITE_CAPACITY;
-        let fuel_full = this.me.fuel >= this.specs.FUEL_CAPACITY;
-        let on_karbonite = this.getKarboniteMap()[this.me.y][this.me.x];
-        let on_fuel = this.getFuelMap()[this.me.y][this.me.x];
-        if ((on_karbonite && !karbonite_full) || (on_fuel && !fuel_full)) {
+        let karboniteFull = this.me.karbonite >= this.specs.KARBONITE_CAPACITY;
+        let fuelFull = this.me.fuel >= this.specs.FUEL_CAPACITY;
+        let onKarbonite = this.getKarboniteMap()[this.me.y][this.me.x];
+        let onFuel = this.getFuelMap()[this.me.y][this.me.x];
+        if ((onKarbonite && !karboniteFull) || (onFuel && !fuelFull)) {
             return this.mine();
         }
     }
@@ -136,43 +136,45 @@ class MyRobot extends BCAbstractRobot {
             return;
         }
         let action;
-        let should_build = false;
+        let shouldBuild = false;
         if ([SPECS.CASTLE, SPECS.CHURCH].includes(this.me.unit)) {
+            let visiblePilgrims = this.nav.getVisibleRobots(this.team, SPECS.PILGRIM);
+            let visibleResources = this.nav.getResourceLocations();
             if (this.hasResourcesForUnits(SPECS.PILGRIM, SPECS.CHURCH)) {
-                should_build = SPECS.PILGRIM;
+                shouldBuild = SPECS.PILGRIM;
             }
         } else if (this.me.unit == SPECS.PILGRIM) {
             if (this.hasResourcesForUnits(SPECS.CHURCH)) {
                 let bases = this.nav.getVisibleRobots(this.team, [SPECS.CASTLE, SPECS.CHURCH]);
-                let base_is_adjacent = bases.length && this.nav.sqDist(this.me, bases[0]) < 2**2;
-                if (!base_is_adjacent) {
-                    let karbonite_full = this.me.karbonite >= this.specs.KARBONITE_CAPACITY;
-                    let fuel_full = this.me.fuel >= this.specs.FUEL_CAPACITY;
-                    let on_karbonite = this.getKarboniteMap()[this.me.y][this.me.x];
-                    let on_fuel = this.getFuelMap()[this.me.y][this.me.x];
-                    if ((karbonite_full && on_karbonite) || (fuel_full && on_fuel)) {
-                        should_build = SPECS.CHURCH;
+                let baseIsAdjacent = bases.length && this.nav.sqDist(this.me, bases[0]) < 2**2;
+                if (!baseIsAdjacent) {
+                    let karboniteFull = this.me.karbonite >= this.specs.KARBONITE_CAPACITY;
+                    let fuelFull = this.me.fuel >= this.specs.FUEL_CAPACITY;
+                    let onKarbonite = this.getKarboniteMap()[this.me.y][this.me.x];
+                    let onFuel = this.getFuelMap()[this.me.y][this.me.x];
+                    if ((karboniteFull && onKarbonite) || (fuelFull && onFuel)) {
+                        shouldBuild = SPECS.CHURCH;
                     }
                 }
             }
         }
-        if (should_build)  {
+        if (shouldBuild)  {
             let dir = this.nav.getRandomValidDir(this.me.unit == SPECS.PILGRIM, this.karbonite <= this.fuel, this.fuel < this.karbonite);
             if (dir) {
-                action = this.buildUnit(should_build, dir.x, dir.y);
+                action = this.buildUnit(shouldBuild, dir.x, dir.y);
             }
         }
         return action;
     }
     
-    fight(attack_order = ATTACK_PRIORITY) {
+    fight(attackOrder = ATTACK_PRIORITY) {
         if (!this.specs.ATTACK_RADIUS) {
             return;
         }
         
         let action;
-        for (let i = 0; i < attack_order.length; i++) {
-            action = this.attackClosestEnemy(attack_order[i]);
+        for (let i = 0; i < attackOrder.length; i++) {
+            action = this.attackClosestEnemy(attackOrder[i]);
             if (action) {
                 return action;
             }
@@ -181,16 +183,16 @@ class MyRobot extends BCAbstractRobot {
     
     walk() {
         if (this.me.unit === SPECS.PILGRIM) {
-            let has_karbonite = !!this.me.karbonite;
-            let has_fuel = !!this.me.fuel;
+            let hasKarbonite = !!this.me.karbonite;
+            let hasFuel = !!this.me.fuel;
         }
-        return this.random_walk();
+        return this.randomWalk();
     }
     
     run() {
     }
     
-    random_walk() {
+    randomWalk() {
         if (!this.specs.SPEED) {
             return;
         }
@@ -210,13 +212,13 @@ class MyRobot extends BCAbstractRobot {
     }
     
     attackClosestEnemy(units) { //attack the closest enemy with a type included the units array
-        let closestEnemies = this.nav.getVisibleRobots(this.enemy_team, units);
+        let closestEnemies = this.nav.getVisibleRobots(this.enemyTeam, units);
         if (closestEnemies && closestEnemies.length) {
             let closest = closestEnemies[0];
             let distance = this.nav.sqDist(this.me, closest);
             if (distance >= this.specs.ATTACK_RADIUS[0] && distance <= this.specs.ATTACK_RADIUS[1]) {
-                let attack_offset = {x: closest.x - this.me.x, y: closest.y - this.me.y};
-                return this.attack(attack_offset.x, attack_offset.y);
+                let attackOffset = {x: closest.x - this.me.x, y: closest.y - this.me.y};
+                return this.attack(attackOffset.x, attackOffset.y);
             }
         }
     }
@@ -229,8 +231,8 @@ class MyRobot extends BCAbstractRobot {
         let k = 0;
         let f = 0;
         for (let i = 0; i < arguments.length; i++) {
-            k += SPECS.UNITS[arguments[i]].CONSTRUCTION_KARBONITE;
-            f += SPECS.UNITS[arguments[i]].CONSTRUCTION_FUEL;
+            k += SPECS.UNITS[arguments[i]].CONSTRUCTIonKarbonite;
+            f += SPECS.UNITS[arguments[i]].CONSTRUCTIonFuel;
         }
         return {karbonite: k, fuel: f};
     }
@@ -250,7 +252,7 @@ class MyRobot extends BCAbstractRobot {
         this._unit = UNIT_TYPES[this.me.unit];
         this.specs = SPECS.UNITS[this.me.unit];
         this.team = this.me.team;
-        this.enemy_team = (this.me.team === SPECS.RED ? SPECS.BLUE : SPECS.RED);
+        this.enemyTeam = (this.me.team === SPECS.RED ? SPECS.BLUE : SPECS.RED);
         this.reflection = this.nav.getReflection();
         this.center = this.nav.getMapCenter();
     }

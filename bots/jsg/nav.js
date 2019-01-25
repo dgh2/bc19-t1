@@ -54,35 +54,35 @@ class Nav {
         return this.toDir(this.getRandomCompassDir());
     }
     
-    getRandomValidDir(avoid_resources = true, prefer_karbonite = true, prefer_fuel = false) {
+    getRandomValidDir(avoidResources = true, preferKarbonite = true, preferFuel = false) {
         let choice;
         let randomCompassDirs = this.getRandomCompassDirs();
         for (let i = 0; i < randomCompassDirs.length; i++) {
-            let random_dir = this.toDir(randomCompassDirs[i]);
-            let loc = this.applyDir(random_dir);
+            let randomDir = this.toDir(randomCompassDirs[i]);
+            let loc = this.applyDir(randomDir);
             if (this.isPassable(loc)) {
-                let random_dir_karbonite = this.self.getKarboniteMap()[loc.y][loc.x];
-                let random_dir_fuel = this.self.getFuelMap()[loc.y][loc.x];
-                if (avoid_resources && !random_dir_karbonite && !random_dir_fuel) {
-                    return random_dir;
-                } else if (!avoid_resources && prefer_karbonite && random_dir_karbonite) {
-                    return random_dir;
-                } else if (!avoid_resources && prefer_fuel && random_dir_fuel) {
-                    return random_dir;
+                let randomDirIsKarbonite = this.self.getKarboniteMap()[loc.y][loc.x];
+                let randomDirIsFuel = this.self.getFuelMap()[loc.y][loc.x];
+                if (avoidResources && !randomDirIsKarbonite && !randomDirIsFuel) {
+                    return randomDir;
+                } else if (!avoidResources && preferKarbonite && randomDirIsKarbonite) {
+                    return randomDir;
+                } else if (!avoidResources && preferFuel && randomDirIsFuel) {
+                    return randomDir;
                 }
                 
                 if (!choice) {
-                    choice = random_dir;
+                    choice = randomDir;
                 } else {
-                    let choice_loc = this.applyDir(choice);
-                    let choice_karbonite = this.self.getKarboniteMap()[choice_loc.y][choice_loc.x];
-                    let choice_fuel = this.self.getFuelMap()[choice_loc.y][choice_loc.x];
-                    let overwrite_karbonite = (avoid_resources && choice_karbonite && !random_dir_karbonite) 
-                                                  || (!avoid_resources && prefer_karbonite && !choice_karbonite && random_dir_karbonite);
-                    let overwrite_fuel = (avoid_resources && choice_fuel && !random_dir_fuel) 
-                                              || (!avoid_resources && prefer_fuel && !choice_fuel && random_dir_fuel);
-                    if (overwrite_karbonite || overwrite_fuel) {
-                        choice = random_dir;
+                    let choiceLoc = this.applyDir(choice);
+                    let choiceIsKarbonite = this.self.getKarboniteMap()[choiceLoc.y][choiceLoc.x];
+                    let choiceIsFuel = this.self.getFuelMap()[choiceLoc.y][choiceLoc.x];
+                    let overwriteKarbonite = (avoidResources && choiceIsKarbonite && !randomDirIsKarbonite) 
+                                                  || (!avoidResources && preferKarbonite && !choiceIsKarbonite && randomDirIsKarbonite);
+                    let overwriteFuel = (avoidResources && choiceIsFuel && !randomDirIsFuel) 
+                                              || (!avoidResources && preferFuel && !choiceIsFuel && randomDirIsFuel);
+                    if (overwriteKarbonite || overwriteFuel) {
+                        choice = randomDir;
                     }
                 }
             }
@@ -212,14 +212,14 @@ class Nav {
     }
 
     //returns all locations where resourceMap is true that are not in the exclusion list sorted by distance
-    getResourceLocations(resourceMap, exclusionList, max_radius = -1) {
+    getResourceLocations(resourceMap, exclusionList, maxRadius = -1) {
         let resources = [];
         for (let col = 0; col < resourceMap.length; col++) {
             for (let row = 0; row < resourceMap[col].length; row++) {
                 let loc = {x: row, y: col};
-                let out_of_range = (max_radius === -1 ? false : this.sqDist(this.self.me, loc) > max_radius);
+                let outOfRange = (maxRadius === -1 ? false : this.sqDist(this.self.me, loc) > maxRadius);
                 let excluded = (exclusionList) && exclusionList.length && exclusionList.some(test => test.x === loc.x && test.y === loc.y);
-                if (resourceMap[col][row] && !excluded && !out_of_range) {
+                if (resourceMap[col][row] && !excluded && !outOfRange) {
                     resources.push(loc);
                 }
             }
@@ -249,10 +249,15 @@ class Nav {
         }
         return resources;
     }
+    
+    getAllResourceLocations(exclusionList) {
+        let karbonite = this.getKarboniteLocations(exclusionList);
+        let fuel = this.getFuelLocations(exclusionList);
+    }
 
     findClosestKarbonite(exclusionList) {
         let resources = this.getKarboniteLocations(exclusionList);
-        if ((resources) && resources.length) {
+        if (resources && resources.length) {
             return resources[0];
         }
     }
@@ -294,9 +299,9 @@ class Nav {
 
     //takes coordinate dir like {x: -1, y: -1}
     canBuild(type, direction) {
-      let required_karbonite = SPECS['UNITS'][type].CONSTRUCTION_KARBONITE;
-      let required_fuel = SPECS['UNITS'][type].CONSTRUCTION_FUEL;
-      if (!this.self.checkResources({karbonite: required_karbonite , fuel: required_fuel} )) {
+      let requiredKarbonite = SPECS['UNITS'][type].CONSTRUCTIonKarbonite;
+      let requiredFuel = SPECS['UNITS'][type].CONSTRUCTIonFuel;
+      if (!this.self.checkResources({karbonite: requiredKarbonite , fuel: requiredFuel} )) {
         return false;
       }
       if (direction) {
@@ -314,35 +319,35 @@ class Nav {
         for (let col = 0; col < width; col++) {
             for (let row = 0; row < height; row++) {
                 let loc = {x: row, y: col};
-                let h_loc = {x: row, y: width - col - 1};
-                let v_loc = {x: height - row - 1, y: col};
+                let hLoc = {x: row, y: width - col - 1};
+                let vLoc = {x: height - row - 1, y: col};
                 
                 let passable = this.self.getPassableMap()[loc.y][loc.x];
                 let karbonite = this.self.getPassableMap()[loc.y][loc.x];
                 let fuel = this.self.getPassableMap()[loc.y][loc.x];
                 
-                let h_passable = this.self.getPassableMap()[h_loc.y][h_loc.x];
-                let v_passable = this.self.getPassableMap()[v_loc.y][v_loc.x];
-                let h_karbonite = this.self.getKarboniteMap()[h_loc.y][h_loc.x];
-                let v_karbonite = this.self.getKarboniteMap()[v_loc.y][v_loc.x];
-                let h_fuel = this.self.getFuelMap()[h_loc.y][h_loc.x];
-                let v_fuel = this.self.getFuelMap()[v_loc.y][v_loc.x];
+                let hPassable = this.self.getPassableMap()[hLoc.y][hLoc.x];
+                let vPassable = this.self.getPassableMap()[vLoc.y][vLoc.x];
+                let hKarbonite = this.self.getKarboniteMap()[hLoc.y][hLoc.x];
+                let vKarbonite = this.self.getKarboniteMap()[vLoc.y][vLoc.x];
+                let hFuel = this.self.getFuelMap()[hLoc.y][hLoc.x];
+                let vFuel = this.self.getFuelMap()[vLoc.y][vLoc.x];
                 
-                let h_passable_reflection = (h_passable === passable && v_passable !== passable);
-                let v_passable_reflection = (h_passable !== passable && v_passable === passable);
-                let h_karbonite_reflection = (h_karbonite === karbonite && v_karbonite !== karbonite);
-                let v_karbonite_reflection = (h_karbonite !== karbonite && v_karbonite === karbonite);
-                let h_fuel_reflection = (h_fuel === fuel && v_fuel !== fuel);
-                let v_fuel_reflection = (h_fuel !== fuel && v_fuel === fuel);
+                let hPassableReflection = (hPassable === passable && vPassable !== passable);
+                let vPassableReflection = (hPassable !== passable && vPassable === passable);
+                let hKarboniteReflection = (hKarbonite === karbonite && vKarbonite !== karbonite);
+                let vKarboniteReflection = (hKarbonite !== karbonite && vKarbonite === karbonite);
+                let hFuelReflection = (hFuel === fuel && vFuel !== fuel);
+                let vFuelReflection = (hFuel !== fuel && vFuel === fuel);
                 
-                if ((h_passable_reflection && !v_passable_reflection)
-                    || (h_karbonite_reflection && !v_karbonite_reflection)
-                    || (h_fuel_reflection && !v_fuel_reflection)) {
+                if ((hPassableReflection && !vPassableReflection)
+                    || (hKarboniteReflection && !vKarboniteReflection)
+                    || (hFuelReflection && !vFuelReflection)) {
                     return {horizontal: 1, vertical: 0}; 
                 }
-                if ((!h_passable_reflection && v_passable_reflection)
-                    || (!h_karbonite_reflection && v_karbonite_reflection)
-                    || (!h_fuel_reflection && v_fuel_reflection)) {
+                if ((!hPassableReflection && vPassableReflection)
+                    || (!hKarboniteReflection && vKarboniteReflection)
+                    || (!hFuelReflection && vFuelReflection)) {
                     return {horizontal: 0, vertical: 1};
                 }
             }
