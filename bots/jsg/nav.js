@@ -218,7 +218,7 @@ class Nav {
             for (let row = 0; row < resourceMap[col].length; row++) {
                 let loc = {x: row, y: col};
                 let outOfRange = (maxRadius === -1 ? false : this.sqDist(this.self.me, loc) > maxRadius);
-                let excluded = (exclusionList) && exclusionList.length && exclusionList.some(test => test.x === loc.x && test.y === loc.y);
+                let excluded = exclusionList && exclusionList.length && exclusionList.some(test => test.x === loc.x && test.y === loc.y);
                 if (resourceMap[col][row] && !excluded && !outOfRange) {
                     resources.push(loc);
                 }
@@ -226,6 +226,24 @@ class Nav {
         }
         if (resources.length) {
             resources.sort(this.getDistanceComparator(this.self.me));
+        }
+        return resources;
+    }
+    
+    getAllResourceLocations(exclusionList, maxRadius = -1) {
+        let karbonite = this.getKarboniteLocations(exclusionList);
+        let fuel = this.getFuelLocations(exclusionList);
+        let resources = karbonite.concat(fuel);
+        if (resources.length) {
+            resources.sort(this.getDistanceComparator(this.self.me));
+        }
+        if (maxRadius !== -1) {
+            for (let i = 0; i < resources.length; i++) {
+                if (this.sqDist(this.self.me, resources[i]) > maxRadius) {
+                    resources = resources.slice(0, i);
+                    break;
+                }
+            }
         }
         return resources;
     }
@@ -248,11 +266,6 @@ class Nav {
             resources.sort(this.getDistanceComparator(this.self.me));
         }
         return resources;
-    }
-    
-    getAllResourceLocations(exclusionList) {
-        let karbonite = this.getKarboniteLocations(exclusionList);
-        let fuel = this.getFuelLocations(exclusionList);
     }
 
     findClosestKarbonite(exclusionList) {
@@ -305,7 +318,7 @@ class Nav {
         return false;
       }
       if (direction) {
-        if (!this.isPassable(this.applyDir(this.self.me, direction))) {
+        if (!this.isPassable(this.applyDir(direction))) {
           return false;
         }
       }
